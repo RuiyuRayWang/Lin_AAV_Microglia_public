@@ -1,0 +1,305 @@
+---
+title: "Investigating Polarization States of Microglia after AAV Transduction: RNAseq"
+author: "Ruiyu Ray Wang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+### Overview of the experiment
+
+Microglia was isolated from neonatal mouse and cultured in TIC medium. 
+
+
+Analysis pipeline:
+  
+  - Salmon (Pseudo-alignment and quantification)
+  - DESeq (differential expression analysis)
+
+<br>
+
+```{r include=FALSE}
+rm(list = ls(all.names = TRUE))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+# Initialization
+
+```{r}
+suppressPackageStartupMessages({
+  library(tximeta)
+  library(SummarizedExperiment)
+  library(DESeq2)
+  library(ggplot2)
+  library(tidyverse)
+  library(RColorBrewer)
+  library(pheatmap)
+})
+```
+
+```{r}
+suppressMessages(
+  extrafont::loadfonts(device="postscript")
+)
+```
+
+Load design table.
+```{r}
+coldata <- read.csv('../misc/RNAseq_sample_table.csv', stringsAsFactors=FALSE) %>% 
+  mutate(
+    files = file.path("../data/AAV_MG_RNAseq/",lib,"quants",SampleName,"quant.sf"),
+    names = SampleName
+    ) %>%
+  column_to_rownames("SampleName")
+
+# To avoid warnings at creating dds, convert integer to factor, recode levels to only contain "_" and "."
+coldata <- coldata %>%
+  mutate(
+    stimuli = recode(stimuli, `LPS_200ng/mL` = "LPS_200ng_mL", `IL4_20ng/mL` = "IL4_20ng_mL"),
+    virus = recode(virus, 
+                   `cap8_mScarlet, moi=50,000` = "cap8_mSc_moi_50000", 
+                   `AAV-cap18-msc, moi=50,000` = "cap18_mSc_moi_50000",
+                   `cap18_mScarlet, moi=50,000` = "cap18_mSc_moi_50000")
+  ) %>%
+  mutate(
+    batch = factor(batch),
+    stimuli = factor(stimuli),
+    virus = factor(virus)
+    )
+coldata
+```
+
+```{r include=FALSE}
+coldata <- coldata[c(
+  "yt0616-1","yt0616-2","yt0616-3","yt0616-4","yt0616-5","yt0616-6",
+  "yt0616-7","yt0616-8","yt0616-9",
+  "yt0616-16","yt0616-17","yt0616-18"),]  ## Select sample
+writeLines("Confirm that file search paths are parsed correctly:")
+file.exists(coldata$files)
+```
+
+```{r include=FALSE}
+# tximeta
+se <- tximeta(coldata)
+dim(se)
+head(rownames(se))
+colnames(se)
+
+# summarize to gene
+gse <- summarizeToGene(se)
+
+# peek
+gse
+assayNames(gse)
+head(assay(gse), 3)
+
+colSums(assay(gse))
+rowRanges(gse)
+seqinfo(rowRanges(gse))
+colData(gse)
+
+round( colSums(assay(gse)) / 1e6, 1 )  # Millions of reads for each library
+```
+
+```{r}
+# dds obj
+dds <- DESeqDataSet(gse, design = ~ stimuli + virus)
+```
+
+Pre-filtering.
+```{r include=FALSE}
+nrow(dds)
+
+# keep <- rowSums(counts(dds)) > 1
+keep <- rowSums(counts(dds) >= 10) >= 3  # at least 3 samples with a count of 10 or higher
+dds <- dds[keep,]
+nrow(dds)
+```
+
+```{r include=FALSE}
+# IMPORTANT: Reset reference levels
+# If this step is omitted, DESeq will perform comparisons based on the alphabetical order of the levels, which will lead to error
+dds$stimuli <- factor(dds$stimuli, levels = c("blank","IL4_20ng_mL","LPS_200ng_mL"))
+dds$virus <- factor(dds$virus, levels = c("untrt","cap18_mSc_moi_50000"))
+```
+
+#### Exploratory analysis: Sample Distance & PCA
+
+Variance stablizing transformation.
+```{r include=FALSE}
+vsd <- vst(dds, blind = FALSE)
+head(assay(vsd), 3)
+colData(vsd)
+```
+
+#### Sample distance
+
+```{r include=FALSE}
+sampleDists <- dist(t(assay(vsd)))
+```
+
+```{r fig.height=7}
+sampleDistMatrix <- as.matrix( sampleDists )
+rownames(sampleDistMatrix) <- paste0(sub("_.*","",vsd$stimuli), " - ", sub("_.*","",vsd$virus), " - batch", vsd$batch)
+# colnames(sampleDistMatrix_bc) <- colnames(sampleDistMatrix_bc)
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+out <- pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+         col = colors)
+```
+
+Obtain Hierachical clustering result shown above, use later.
+```{r}
+clusters <- cutree(out$tree_col, k = 3)
+vsd$clusters <- as.factor(clusters)
+dds$clusters <- as.factor(clusters)
+```
+
+#### PCA
+
+```{r fig.width=9, fig.height=5}
+pcaData <- plotPCA(vsd, intgroup = c("names","clusters","stimuli","virus"), returnData = TRUE)
+pcaData$stimulus_virus <- factor(paste(pcaData$stimuli, pcaData$virus, sep = "."),
+                                 levels = c("blank.untrt","blank.cap18_mSc_moi_50000","IL4_20ng_mL.untrt","LPS_200ng_mL.untrt"))
+percentVar <- round(100* attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(x = PC1, y = PC2)) + 
+  geom_point(aes(color = clusters, shape = stimuli, fill = stimulus_virus), size = 2, stroke = 1, position = position_dodge2(width = 0.8)) + 
+  scale_shape_manual(values = c(21,22,24)) +
+  # scale_color_manual(values = scales::hue_pal()(3)) +
+  scale_fill_manual(values=c("white",brewer.pal(n = 12, name = "Paired")[c(5,1,3)])) +
+  # ggrepel::geom_text_repel(aes(label = name)) +
+  guides(color = "none",
+         fill = guide_legend(override.aes = list(shape = 21))) +  # Hack: github.com/tidyverse/ggplot2/issues/2322
+  stat_ellipse(data=pcaData, mapping=aes(color = clusters), linetype = 2) +
+  xlim(-27,37) + ylim(-18,16) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) + 
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) + 
+  coord_fixed() +
+  # ggtitle("PCA with VST data") +
+  theme_bw() +
+  theme(
+    legend.position = "none"
+  )
+```
+```{r}
+ggsave(filename = "PCA_cap18.eps", 
+       device = "eps",
+       path = "../outs/Fig1/",
+       width = 5, height = 4,
+       dpi = 300,
+       family = "Arial"
+       )
+```
+
+### Differential expression analysis
+
+```{r}
+dds <- DESeq(dds)
+```
+
+<br>
+
+#### 1. Effect of AAV-cap18 transduction compared to blank
+
+```{r}
+res_aav_cap18 <- results(dds, contrast = c("virus","cap18_mSc_moi_50000","untrt"))
+res_aav_cap18 <- res_aav_cap18[order(res_aav_cap18$padj),]
+summary(res_aav_cap18)
+
+res_aav_cap18$gene <- rowRanges(dds)[rownames(res_aav_cap18),]$gene_name
+res_aav_cap18$description <- rowRanges(dds)[rownames(res_aav_cap18),]$description
+tab_aav_cap18 <- as.data.frame(res_aav_cap18)
+
+aav_sig_tab <- tab_aav_cap18 %>% filter(padj < 0.1) %>% filter(log2FoldChange > 1 | log2FoldChange < -1) %>% mutate(treat = "AAV_cap18")
+aav_cap18_sig_genes_up <- tab_aav_cap18 %>% filter(padj < 0.1, log2FoldChange > 1.6) %>% arrange(desc(log2FoldChange)) %>% rownames_to_column("ens_id") %>% pull(ens_id)
+aav_cap18_sig_genes_down <- tab_aav_cap18 %>% filter(padj < 0.1, log2FoldChange < -1.6) %>% arrange(desc(log2FoldChange)) %>% rownames_to_column("ens_id") %>% pull(ens_id)
+```
+
+#### 2. Effect of AAV-cap8 transduction compared to blank
+
+```{r}
+res_aav_cap8 <- results(dds, contrast = c("virus","cap8_mSc_moi_50000","untrt"))
+res_aav_cap8 <- res_aav_cap8[order(res_aav_cap8$padj),]
+summary(res_aav_cap8)
+
+res_aav_cap8$gene <- rowRanges(dds)[rownames(res_aav_cap8),]$gene_name
+res_aav_cap8$description <- rowRanges(dds)[rownames(res_aav_cap8),]$description
+tab_aav_cap8 <- as.data.frame(res_aav_cap8)
+
+aav_cap8_sig_tab <- tab_aav_cap8 %>% filter(padj < 0.1) %>% filter(log2FoldChange > 1 | log2FoldChange < -1) %>% mutate(treat = "AAV_cap8")
+aav_cap8_sig_genes_up <- tab_aav_cap8 %>% filter(padj < 0.1, log2FoldChange > 1.6) %>% arrange(desc(log2FoldChange)) %>% rownames_to_column("ens_id") %>% pull(ens_id)
+aav_cap8_sig_genes_down <- tab_aav_cap8 %>% filter(padj < 0.1, log2FoldChange < -1.6) %>% arrange(desc(log2FoldChange)) %>% rownames_to_column("ens_id") %>% pull(ens_id)
+```
+
+#### 3. Effect of IL4 compared to blank
+
+```{r}
+res_il4 <- results(dds, contrast = c("stimuli","IL4_20ng_mL","blank"))
+res_il4 <- res_il4[order(res_il4$padj),]
+summary(res_il4)
+
+res_il4$gene <- rowRanges(dds)[rownames(res_il4),]$gene_name
+res_il4$description <- rowRanges(dds)[rownames(res_il4),]$description
+tab_il4 <- as.data.frame(res_il4)
+
+il4_sig_genes_up <- tab_il4 %>% filter(padj < 0.1, log2FoldChange > 1.6) %>% arrange(desc(log2FoldChange)) %>% rownames_to_column("ens_id") %>% pull(ens_id)
+il4_sig_genes_down <- tab_il4 %>% filter(padj < 0.1, log2FoldChange < -1.6) %>% arrange(desc(log2FoldChange)) %>% rownames_to_column("ens_id") %>% pull(ens_id)
+```
+
+#### 4. Effect of LPS compared to blank
+
+```{r}
+res_lps <- results(dds, contrast = c("stimuli","LPS_200ng_mL","blank"))
+res_lps <- res_lps[order(res_lps$padj),]
+summary(res_lps)
+
+res_lps$gene <- rowRanges(dds)[rownames(res_lps),]$gene_name
+res_lps$description <- rowRanges(dds)[rownames(res_lps),]$description
+tab_lps <- as.data.frame(res_lps)
+
+lps_sig_genes_up <- tab_lps %>% filter(padj < 0.1, log2FoldChange > 1.2) %>% arrange(desc(log2FoldChange)) %>% rownames_to_column("ens_id") %>% pull(ens_id)
+lps_sig_genes_down <- tab_lps %>% filter(padj < 0.1, log2FoldChange < -1.2) %>% arrange(desc(log2FoldChange)) %>% rownames_to_column("ens_id") %>% pull(ens_id)
+```
+
+### Visualization: Heatmap
+
+pheatmap did a nice job. Remember to do row scaling.
+```{r}
+genes_to_plot <- union(lps_sig_genes_down, union(il4_sig_genes_down, union(lps_sig_genes_up, il4_sig_genes_up)))
+pheatmap(assay(vsd)[genes_to_plot,], cluster_rows = FALSE, show_rownames = FALSE, cluster_cols = FALSE, scale = "row")
+```
+
+```{r}
+genesubsets_to_plot <- rowRanges(vsd)[rowRanges(vsd)$gene_name %in% c("Cst3","Cxcl10","Il12b","Ccl2","Il1b","Nos2","Tnf","Il6","Il1a","Clec10a","Clec7a","Chil3","Mrc1"),]$gene_id
+names(genesubsets_to_plot) <- rowRanges(vsd)[rowRanges(vsd)$gene_name %in% c("Cst3","Cxcl10","Il12b","Ccl2","Il1b","Nos2","Tnf","Il6","Il1a","Clec10a","Clec7a","Chil3","Mrc1"),]$gene_name
+
+samples_to_plot <- c("yt0616-1","yt0616-2","yt0616-3","yt0616-4","yt0616-5","yt0616-6",
+  "yt0616-7","yt0616-8","yt0616-9","yt0616-13","yt0616-14","yt0616-15",
+  "yt0616-16","yt0616-17","yt0616-18")
+
+pheatmap(
+  assay(vsd)[genesubsets_to_plot,samples_to_plot], 
+  cluster_rows = TRUE, 
+  show_rownames = TRUE, 
+  cluster_cols = FALSE, 
+  labels_row = names(genesubsets_to_plot),
+  labels_col = colnames(vsd),
+  scale = "row",
+  angle_col = 90
+    )
+## Use Rstudio "Export" button to export as eps editable format
+```
+
+```{r}
+# Alternative solution
+ComplexHeatmap::Heatmap(t(scale(t(assay(vsd)[genesubsets_to_plot,samples_to_plot]))), 
+                        cluster_rows = TRUE, 
+                        show_row_names = TRUE, 
+                        cluster_columns = FALSE,
+                        row_labels = names(genesubsets_to_plot),
+                        # column_labels = c("","Untransduced","","","Transduced","","","LPS","","","IL4",""),
+                        column_names_rot = 45
+                        )
+```
+
+
