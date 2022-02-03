@@ -1,5 +1,5 @@
 # Lin et al. AAV Microglia public
-Code for analyzing scRNA-seq data (in review) in Lin et al.
+Code for analyzing scRNA-seq data (in submission) in Lin et al.
 
 ## Introduction
 
@@ -22,7 +22,7 @@ To minimize "*ex vivo*" activation, microglia were rapidly dissociated by Dounce
 ├── .gitignore
 ├── LICENSE
 ├── README.md
-├── data                   (not shown)
+├── data                   (omitted in repo to save space)
 |   ├── AAV_MG_RNAseq      (data for RNAseq)
 |   ├── AAV_MG_scRNAseq    (data for scRNA-seq)
 |   └── GSE                (processed data deposited on GEO)
