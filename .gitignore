@@ -1,15 +1,5 @@
 # Customized ignore
-data/
-*.xlsx
-manuscript/
-outs/
-scratch/
 deprecated/
-notebooks/*requirements.txt
-notebooks/PBMC10k_downstream-analysis.ipynb
-notebooks/PBMC10k_SCENIC-protocol-CLI.ipynb
-notebooks/SCENIC Protocol - Case study - Cancer data sets.ipynb
-notebooks/SCENIC Protocol - Case study - Mouse brain data set.ipynb
 
 # LibreOffice temp files
 .~lock*

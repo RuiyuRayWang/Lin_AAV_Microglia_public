@@ -1,0 +1,211 @@
+---
+title: "Lin et al.: AAV Microglia - bulk RNAseq"
+author: "Ruiyu Ray Wang"
+date: "3/4/2022"
+output: html_document
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Lin et al.: AAV Microglia
+
+## Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing
+
+### TL;DR
+
+You may click on the following links to fast forward to the codes directly producing the Figures:
+
+  - [Figure 1_1](#Figure1_1)
+  - [Figure 1_2](#Figure1_2)
+
+### Introduction
+
+The study of microglia biology and the development of microglia-based gene therapies are in urgent need of efficient and safe vehicles for microglia transgene delivery. To address this, we developed adeno-associated virus (AAV) variants that mediate efficient in vitro and in vivo microglia transduction via directed evolution of the AAV capsid protein. To assess the effect of AAV transduction on microglia, we carried out bulk RNAseq in primary microglia and found that microglia transduced by AAV remain close to homeostatic state. Furthermore, single-cell RNA sequencing showed that the AAV-MG variants mediate safe in vivo transgene delivery without inducing microglia immune activation. These AAV variants should facilitate the applications of various genetically-encoded sensors and effectors in studying microglia-related biology and therapeutic interventions.
+
+This vignette reproduces analyses related to bulk RNAseq in the original publication (Lin et al., 2022).  
+
+### Overview of the experiment
+
+Microglia were isolated from neonatal mouse and cultured (*in vitro*) in TIC medium.
+
+Two batches of experiments were performed.  
+The first batch of experiment aims to study the differences in microglia transcriptomes under different conditions. Microglia were treated with LPS, IL4, or AAV-cap18 to induce activation, alternative activation, or AAV transduction states. Three replicates were performed for each condition.  
+The second batch aims to investigate whether priming microglia with various factors introduce changes of the transcriptional states of microglia after AAV transduction.
+
+Full analysis pipeline:
+  
+  - Salmon (Pseudo-alignment and quantification)
+  - tximeta (Gene-level summarization)[^1]
+  - DESeq (differential expression analysis)
+
+### Load libraries and data
+
+Load reuiqred libraries.
+```{r}
+suppressPackageStartupMessages({
+  library(SummarizedExperiment)
+  library(org.Mm.eg.db)
+  # library(GEOquery)
+  library(DESeq2)
+  library(ggplot2)
+  library(tidyverse)
+  library(RColorBrewer)
+  library(pheatmap)
+})
+```
+
+Download the processed data matrix from GEO. The metadata table can be found in the `miscs/` directory in this github repo.
+```{r}
+# GEOquery::getGEO(GEO = "GSE197743",filename = "GSE197743_AAV_MG_RNAseq.tsv.gz", destdir = ".")
+# download.file(url = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE197743&format=file&file=GSE197743%5FAAV%5FMG%5FRNAseq%2Etsv%2Egz",
+#               destfile = "../data/GSE197743/AAV_MG_RNAseq.tsv.gz",
+#               method = "wget")
+```
+
+Load the data table and associated metadata to workspace.
+```{r}
+counts = as.matrix(read.table(file = gzfile("../data/GSE197743/GSE197743_AAV_MG_RNAseq.tsv.gz"), sep = "\t"))
+coldata = read.csv(file = "../miscs/RNAseq_sample_table.csv", header = T)
+```
+
+```{r}
+# To avoid warnings at creating dds, recode factor levels to replace "/" by "_" or ".", and convert integer type to factor
+coldata <- coldata %>%
+  mutate(
+    stimuli = recode(stimuli, `LPS_200ng/mL` = "LPS_200ng_mL", `IL4_20ng/mL` = "IL4_20ng_mL"),
+    virus = recode(virus, 
+                   `AAV-cap18-msc, moi=50,000` = "cap18_mSc_moi_50000")
+  ) %>%
+  mutate(
+    batch = factor(batch),
+    stimuli = factor(stimuli),
+    virus = factor(virus)
+    )
+coldata
+```
+
+Note that this matrix contains non-integer values, which are summarized counts from transcript level quantification by `tximeta`. Since we're **not** working with `tximeta` here , we need to perform an additional step of approximation to round the values to integers.  
+If you'd like to work with non-approximated version of the data, you would have to download the raw fastq files and perform the analysis from there. Refer to `vignettes/rnaseq_raw.Rmd` for *that* version of the pipeline.
+```{r}
+gse <- SummarizedExperiment(assays = round(counts), colData = coldata)
+```
+
+We first focus on analyzing the first experiment. Subset the data and create a DESeq2 object.
+```{r}
+gse_1 <- gse[,1:12]
+dds <- DESeqDataSet(gse_1, design = ~ stimuli + virus)
+```
+
+Manually retrieve rowData from `org.Mm.eg.db`. 
+```{r}
+gene_name <- mapIds(x = org.Mm.eg.db, keys = rownames(dds), column = "SYMBOL", keytype = "ENSEMBL", multiVals = "first")
+ensembl_id <- rownames(dds)
+mcols(dds) <- DataFrame(mcols(dds), gene_name, ensembl_id)
+```
+
+Pre-filter the genes.
+```{r}
+nrow(dds)
+```
+```{r}
+keep <- rowSums(counts(dds) >= 10) >= 3  # at least 3 samples with a count of 10 or higher
+dds <- dds[keep,]
+nrow(dds)
+```
+
+Reset the orders of factor levels.
+```{r}
+dds$stimuli <- factor(dds$stimuli, levels = c("blank","IL4_20ng_mL","LPS_200ng_mL"))
+dds$virus <- factor(dds$virus, levels = c("untrt","cap18_mSc_moi_50000"))
+```
+
+### Exploratory Data Analysis (EDA): Sample Distance & PCA
+
+For exploratory analysis, it is common practice to work on the transformed count data. We choose to use variance stablizing transformation here for its robustness and speed.
+```{r}
+vsd <- vst(dds, blind = FALSE)
+```
+
+#### Sample distance
+
+Sample distance provides a powerful and intuitive way to explore the states of the transcriptomes across samples.  
+To perform this analysis, we compute a sample distance matrix by the `dist()` function using the euclidean distance as metric.
+```{r}
+sampleDists <- dist(t(assay(vsd)))
+```
+
+Now plot the distance matrix with `pheatmap`.
+```{r fig.height=5}
+sampleDistMatrix <- as.matrix( sampleDists )
+rownames(sampleDistMatrix) <- paste0(sub("_.*","",vsd$stimuli), " - ", sub("_.*","",vsd$virus))
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+out <- pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+         show_colnames = F,
+         col = colors)
+
+# Store results from hierachical clustering
+clusters <- cutree(out$tree_col, k = 3)
+vsd$clusters <- as.factor(clusters)
+dds$clusters <- as.factor(clusters)
+```
+
+From this plot we see that triggers such as LPS or IL4 promoted distinct states in the transcriptional states of microglia. These were conventionally described as "Reactive" (LPS) or "Alternative activation" (IL4) states. On the other hand, while microglia underwent no treatment and microglia transduced with AAV-cap18 demonstrated a clear within-group homogeneity, they were characterized by a similar transcriptional state, as illustrated by the hierachical clustering results.
+
+#### PCA {#Figure1_1}
+
+Pricipal component analysis provides another way of summarizing the microglia transcription states under different conditions.
+```{r}
+pcaData <- plotPCA(vsd, intgroup = c("SampleName","clusters","stimuli","virus"), returnData = TRUE)
+pcaData$stimulus_virus <- factor(paste(pcaData$stimuli, pcaData$virus, sep = "."),
+                                 levels = c("blank.untrt","blank.cap18_mSc_moi_50000","IL4_20ng_mL.untrt","LPS_200ng_mL.untrt"))
+percentVar <- round(100* attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(x = PC1, y = PC2)) + 
+  geom_point(aes(color = clusters, shape = stimuli, fill = stimulus_virus), size = 2, stroke = 1, position = position_dodge2(width = 0.8)) + 
+  scale_shape_manual(values = c(21,22,24)) +
+  scale_fill_manual(values=c("white",brewer.pal(n = 12, name = "Paired")[c(5,1,3)])) +
+  guides(color = "none",
+         fill = guide_legend(override.aes = list(shape = 21))) +  # Hack: github.com/tidyverse/ggplot2/issues/2322
+  stat_ellipse(data=pcaData, mapping=aes(color = clusters), linetype = 2) +
+  xlim(-27,37) + ylim(-18,16) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) + 
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) + 
+  coord_fixed() +
+  theme_bw() +
+  theme(
+    legend.position = "none"
+  )
+```
+
+Using clusters obtained from sample distance matrix, we use the `stat_ellipse` function to draw a 95% confidence level for a multivariate t-distribution of the PC coordinates.
+
+#### Visualize Gene Expression by Heatmap {#Figure1_2}
+
+To have a closer look at the microglia transcription states under different conditions, we use heatmap to plot the relative expression of canonical homeostatic and reactive marker genes.
+
+```{r}
+genesubsets_to_plot <- rowData(vsd)[rowData(vsd)$gene_name %in% c("Cst3","Cxcl10","Il12b","Ccl2","Il1b","Nos2","Tnf","Il6","Il1a","Clec10a","Clec7a","Chil3","Mrc1"),]$ensembl_id
+names(genesubsets_to_plot) <- rowData(vsd)[rowData(vsd)$gene_name %in% c("Cst3","Cxcl10","Il12b","Ccl2","Il1b","Nos2","Tnf","Il6","Il1a","Clec10a","Clec7a","Chil3","Mrc1"),]$gene_name  ## This keeps the order right
+sample_order <- c("yt0616.1","yt0616.2","yt0616.3",
+                  "yt0616.16","yt0616.17","yt0616.18",
+                  "yt0616.4","yt0616.5","yt0616.6",
+                  "yt0616.7","yt0616.8","yt0616.9"
+                  )
+```
+```{r}
+pheatmap(
+  assay(vsd)[genesubsets_to_plot,sample_order], 
+  cluster_rows = TRUE, 
+  show_rownames = TRUE, 
+  cluster_cols = FALSE, 
+  labels_row = names(genesubsets_to_plot),
+  labels_col = colnames(vsd),
+  scale = "row",
+  angle_col = 90
+    )
+```
+
+[^1]: The data submitted to GEO is the preprocessed table, therefore the gene-level summarization step was omitted from this vignette.

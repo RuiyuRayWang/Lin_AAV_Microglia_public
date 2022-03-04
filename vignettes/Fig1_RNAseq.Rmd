@@ -44,7 +44,7 @@ suppressMessages(
 
 Load design table.
 ```{r}
-coldata <- read.csv('../misc/RNAseq_sample_table.csv', stringsAsFactors=FALSE) %>% 
+coldata <- read.csv('../miscs/RNAseq_sample_table.csv', stringsAsFactors=FALSE) %>% 
   mutate(
     files = file.path("../data/AAV_MG_RNAseq/",lib,"quants",SampleName,"quant.sf"),
     names = SampleName

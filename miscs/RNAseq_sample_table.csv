@@ -1,0 +1,23 @@
+SampleName,TIC,stimuli,virus,batch,lib_type
+yt0616.1,trt,blank,untrt,1,pe
+yt0616.2,trt,blank,untrt,1,pe
+yt0616.3,trt,blank,untrt,1,pe
+yt0616.4,trt,LPS_200ng/mL,untrt,1,pe
+yt0616.5,trt,LPS_200ng/mL,untrt,1,pe
+yt0616.6,trt,LPS_200ng/mL,untrt,1,pe
+yt0616.7,trt,IL4_20ng/mL,untrt,1,pe
+yt0616.8,trt,IL4_20ng/mL,untrt,1,pe
+yt0616.9,trt,IL4_20ng/mL,untrt,1,pe
+yt0616.16,trt,blank,"AAV-cap18-msc, moi=50,000",1,pe
+yt0616.17,trt,blank,"AAV-cap18-msc, moi=50,000",1,pe
+yt0616.18,trt,blank,"AAV-cap18-msc, moi=50,000",1,pe
+YT.1111.01,trt,IL4_20ng/mL,"AAV-cap18-msc, moi=50,000",2,se
+YT.1111.02,trt,IL4_20ng/mL,"AAV-cap18-msc, moi=50,000",2,se
+YT.1111.03,trt,IL4_20ng/mL,"AAV-cap18-msc, moi=50,000",2,se
+YT.1111.04,trt,LPS_200ng/mL,"AAV-cap18-msc, moi=50,000",2,se
+YT.1111.05,trt,LPS_200ng/mL,"AAV-cap18-msc, moi=50,000",2,se
+YT.1111.06,trt,LPS_200ng/mL,"AAV-cap18-msc, moi=50,000",2,se
+YT.1111.07,trt,IL4_20ng/mL,untrt,2,se
+YT.1111.08,trt,IL4_20ng/mL,untrt,2,se
+YT.1111.09,trt,IL4_20ng/mL,untrt,2,se
+YT.1111.12,trt,LPS_200ng/mL,untrt,2,se
