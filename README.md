@@ -1,5 +1,6 @@
 # Lin et al. AAV Microglia public
-Code for analyzing scRNA-seq data (in submission) in Lin et al.
+
+Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
 
 ## Introduction
 

@@ -1,17 +1,14 @@
 ---
-title: "Lin et al.: AAV Microglia - bulk RNAseq"
+title: 'Lin et al.: AAV Microglia'
+subtitle: 'RNA-seq'
 author: "Ruiyu Ray Wang"
-date: "3/4/2022"
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
 ```{r include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
-
-# Lin et al.: AAV Microglia
-
-## Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing
 
 ### TL;DR
 
@@ -21,6 +18,8 @@ You may click on the following links to fast forward to the codes directly produ
   - [Figure 1_2](#Figure1_2)
 
 ### Introduction
+
+Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
 
 The study of microglia biology and the development of microglia-based gene therapies are in urgent need of efficient and safe vehicles for microglia transgene delivery. To address this, we developed adeno-associated virus (AAV) variants that mediate efficient in vitro and in vivo microglia transduction via directed evolution of the AAV capsid protein. To assess the effect of AAV transduction on microglia, we carried out bulk RNAseq in primary microglia and found that microglia transduced by AAV remain close to homeostatic state. Furthermore, single-cell RNA sequencing showed that the AAV-MG variants mediate safe in vivo transgene delivery without inducing microglia immune activation. These AAV variants should facilitate the applications of various genetically-encoded sensors and effectors in studying microglia-related biology and therapeutic interventions.
 
@@ -47,7 +46,6 @@ Load reuiqred libraries.
 suppressPackageStartupMessages({
   library(SummarizedExperiment)
   library(org.Mm.eg.db)
-  # library(GEOquery)
   library(DESeq2)
   library(ggplot2)
   library(tidyverse)
@@ -56,12 +54,13 @@ suppressPackageStartupMessages({
 })
 ```
 
-Download the processed data matrix from GEO. The metadata table can be found in the `miscs/` directory in this github repo.
+If you haven't done so, download data from GEO.
 ```{r}
-# GEOquery::getGEO(GEO = "GSE197743",filename = "GSE197743_AAV_MG_RNAseq.tsv.gz", destdir = ".")
-# download.file(url = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE197743&format=file&file=GSE197743%5FAAV%5FMG%5FRNAseq%2Etsv%2Egz",
-#               destfile = "../data/GSE197743/AAV_MG_RNAseq.tsv.gz",
-#               method = "wget")
+if(!file.exists('../data/GSE197743/GSE197743_AAV_MG_RNAseq.tsv.gz')){
+  library(GEOquery)
+  options(timeout = 600)  ## In case of slow Internet connections
+  getGEOSuppFiles(GEO = "GSE197743", makeDirectory = T, baseDir = '../data/')
+}
 ```
 
 Load the data table and associated metadata to workspace.
@@ -206,6 +205,12 @@ pheatmap(
   scale = "row",
   angle_col = 90
     )
+```
+
+### Session info
+
+```{r}
+sessionInfo()
 ```
 
 [^1]: The data submitted to GEO is the preprocessed table, therefore the gene-level summarization step was omitted from this vignette.

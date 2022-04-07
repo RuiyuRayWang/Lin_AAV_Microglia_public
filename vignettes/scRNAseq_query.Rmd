@@ -6,7 +6,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
@@ -254,6 +254,12 @@ querydata$transduce_serotype <- as.character(querydata$transduce_serotype)
 querydata$seurat_clusters <- as.integer(as.character(querydata$seurat_clusters))
 SaveH5Seurat(querydata, filename = '../data/AAV_MG_scRNAseq/cells_query.h5Seurat', overwrite = T)
 Convert('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', dest = "h5ad", overwrite = T)
+```
+
+### Session info
+
+```{r}
+sessionInfo()
 ```
 
 [^1]: Bennett, M. L. et al. New tools for studying microglia in the mouse and human CNS. Proc Natl Acad Sci USA 113, E1738 (2016).
