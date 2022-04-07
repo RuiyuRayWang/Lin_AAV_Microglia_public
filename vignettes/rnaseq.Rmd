@@ -38,7 +38,7 @@ Full analysis pipeline:
   
   - Salmon (Pseudo-alignment and quantification)
   - tximeta (Gene-level summarization)[^1]
-  - DESeq (differential expression analysis)
+  - DESeq2 (differential expression analysis)
 
 ### Load libraries and data
 

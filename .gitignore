@@ -1,5 +1,6 @@
 # Customized ignore
-deprecated/
+data/*
+deprecated/*
 
 # LibreOffice temp files
 .~lock*
