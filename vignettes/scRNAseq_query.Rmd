@@ -16,15 +16,19 @@ Characterization of microglia polarization states under targeted AAV transductio
 
 The study of microglia biology and the development of microglia-based gene therapies are in urgent need of efficient and safe vehicles for microglia transgene delivery. To address this, we developed adeno-associated virus (AAV) variants that mediate efficient in vitro and in vivo microglia transduction via directed evolution of the AAV capsid protein. To assess the effect of AAV transduction on microglia, we carried out bulk RNAseq in primary microglia and found that microglia transduced by AAV remain close to homeostatic state. Furthermore, single-cell RNA sequencing showed that the AAV-MG variants mediate safe in vivo transgene delivery without inducing microglia immune activation. These AAV variants should facilitate the applications of various genetically-encoded sensors and effectors in studying microglia-related biology and therapeutic interventions.
 
-This vignette reproduces analyses related to scRNAseq in the original publication (Lin et al., 2022).  
+### About this Vignette
+
+This vignette illustrates the steps by which the query data (Smartseq2) in the original publication (Lin et al., 2022) was processed. The input file is a feature-barcode-count table (`GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz`) produced by the Snakemake pipeline [`ScRNAseq_smkpipe_at_Luolab`](https://github.com/RuiyuRayWang/ScRNAseq_smkpipe_at_Luolab). The output of this vignette is a processed `.h5Seurat` with metadata slot filled.s
 
 ### Overview of the experiment
 
 Microglia were isolated from adult mice (~8w) using a method based on the "cold-mechanical dissociation" protocol (Bennett et al., 2016)[^1].
 
-We found that the single cell transcriptome acquired by 10X Chromium (3' Chemistry v3) captured transcripts of the AAV-packaged transgene (mScarlet) at a very low rate (data not published). Therefore we carried out deep single cell sequencing using a modified protocol based on a Smart-seq2/STRTseq hybrid protocol (Zhang et al., 2020)[^2] on *in vivo* transduced microglia. The Smart-seq2 based method captured mScarlet transcripts with substantially higher efficiently.
+We found that the single cell transcriptome acquired by 10X Chromium (3' Chemistry v3) captured transcripts of the AAV-packaged transgene (mScarlet) at a very low rate (data not published). Therefore we carried out deep single cell sequencing using a modified protocol based on a customized Smart-seq2 protocol (Zhang et al., 2020)[^2] on microglia isolated from mice subjected to stereotaxic AAV injection. The Smart-seq2 based method captured mScarlet transcripts with substantially higher efficiently.
 
 To characterize the microglia transcriptomes under immune activation, we isolated microglia from mice subjected to Saline, Poly(i:c) and LPS treatment (i.p.), and performed scRNA-seq using the 10X Chromium platform.
+
+### Analysis Outline
 
 Upstream analysis pipelines (i.e. sequence alignment, generation of digital expression matrix, etc.):
 
@@ -55,7 +59,7 @@ If you haven't done so, download data from GEO.
 ```{r}
 if(!file.exists('../data/GSE197743/GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz')){
   library(GEOquery)
-  options(timeout = 600)  ## In case of slow Internet connections
+  options(timeout = 6000)  ## In case of slow Internet connections
   getGEOSuppFiles(GEO = "GSE197743", makeDirectory = T, baseDir = '../data/')
 }
 ```
