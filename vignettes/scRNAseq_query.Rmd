@@ -18,11 +18,11 @@ The study of microglia biology and the development of microglia-based gene thera
 
 ### About this Vignette
 
-This vignette illustrates the steps by which the query data (Smartseq2) in the original publication (Lin et al., 2022) was processed. The input file is a feature-barcode-count table (`GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz`) produced by the Snakemake pipeline [`ScRNAseq_smkpipe_at_Luolab`](https://github.com/RuiyuRayWang/ScRNAseq_smkpipe_at_Luolab). The output of this vignette is a processed `.h5Seurat` with metadata slot filled.s
+This vignette illustrates the steps by which the query data (Smartseq2) in the original publication (Lin et al., 2022) was processed. The input file is a feature-barcode-count table (`GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz`) produced by the Snakemake pipeline [`ScRNAseq_smkpipe_at_Luolab`](https://github.com/RuiyuRayWang/ScRNAseq_smkpipe_at_Luolab). The output of this vignette is a processed `.h5Seurat` with metadata slot filled.
 
-### Overview of the experiment
+### Overview of the experiments
 
-Microglia were isolated from adult mice (~8w) using a method based on the "cold-mechanical dissociation" protocol (Bennett et al., 2016)[^1].
+Microglia were isolated from adult mice (~8w) using a method based on the "cold-mechanical dissociation" protocol (Bennett et al., 2016)[^1]. The steps involving FACS sorting from the original protocol was omitted to minimize *ex vivo* activation of microglia.
 
 We found that the single cell transcriptome acquired by 10X Chromium (3' Chemistry v3) captured transcripts of the AAV-packaged transgene (mScarlet) at a very low rate (data not published). Therefore we carried out deep single cell sequencing using a modified protocol based on a customized Smart-seq2 protocol (Zhang et al., 2020)[^2] on microglia isolated from mice subjected to stereotaxic AAV injection. The Smart-seq2 based method captured mScarlet transcripts with substantially higher efficiently.
 
@@ -256,6 +256,7 @@ querydata$treatment <- as.character(querydata$treatment)
 querydata$group <- as.character(querydata$group)
 querydata$transduce_serotype <- as.character(querydata$transduce_serotype)
 querydata$seurat_clusters <- as.integer(as.character(querydata$seurat_clusters))
+if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
 SaveH5Seurat(querydata, filename = '../data/AAV_MG_scRNAseq/cells_query.h5Seurat', overwrite = T)
 Convert('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', dest = "h5ad", overwrite = T)
 ```
