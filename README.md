@@ -19,7 +19,7 @@ Overall design:
         * mRNA profiles of cold-dissociated microglia from mice treated with Saline, LPS, or Poly(i:c), using 10X Chromium (reference dataset); 
         * mRNA profiles of cold-dissociated microglia from mice treated with LPS or stereotaxically injected with AAV, using Smart-seq2 (query dataset).
 
-To minimize "*ex vivo*" activation, microglia were rapidly dissociated by Dounce homogenization under cold conditions and further enriched by Percoll gradient density centrifugation. i.e. the "classical" cold-mechanical dissociation protocol (Bennett et al., 2016).
+Microglia were rapidly dissociated by Dounce homogenization under cold conditions and further enriched by Percoll gradient density centrifugation. e.g. the "classical" cold-mechanical dissociation protocol (Bennett et al., 2016). Steps involving FACS sorting were omitted to minimize *ex vivo* activation.
 
 ## Repository structure
 

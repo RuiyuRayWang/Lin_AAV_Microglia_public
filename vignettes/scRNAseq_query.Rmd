@@ -18,7 +18,7 @@ The study of microglia biology and the development of microglia-based gene thera
 
 ### About this Vignette
 
-This vignette illustrates the steps by which the query data (Smartseq2) in the original publication (Lin et al., 2022) was processed. The input file is a feature-barcode-count table (`GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz`) produced by the Snakemake pipeline [`ScRNAseq_smkpipe_at_Luolab`](https://github.com/RuiyuRayWang/ScRNAseq_smkpipe_at_Luolab). The output of this vignette is a processed `.h5Seurat` with metadata slot filled.
+This vignette illustrates the steps by which the query data (Smartseq2) in the original publication (Lin et al., 2022) was processed. The input file of this vignette is a feature-barcode-count table (`GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz`) produced by the Snakemake pipeline [`ScRNAseq_smkpipe_at_Luolab`](https://github.com/RuiyuRayWang/ScRNAseq_smkpipe_at_Luolab). The output is a processed `.h5Seurat` with metadata slot filled.
 
 ### Overview of the experiments
 
@@ -185,10 +185,11 @@ querydata <- querydata %>%
 ```
 
 Remove cells NOT expressing the canonical microglia marker 'Hexb'. These are putatively low quality cells.
-```{r fig.width=12, fig.height=5}
+```{r fig.width=10, fig.height=4}
 FeaturePlot(querydata, features = "Hexb") | DimPlot(querydata, cells.highlight = WhichCells(querydata, expression = Hexb < 2))
 ```
-Re-do Seurat workflow on subsetted data.
+
+Re-run Seurat workflow on subsetted data.
 ```{r}
 querydata <- subset(querydata, subset = Hexb > 2)
 querydata <- querydata %>%
@@ -203,19 +204,25 @@ querydata <- querydata %>%
 ```
 
 In the figure below, we can clearly see that microglia from LPS treated mice were primed and adopted a distinct transcriptomic state. Later, we'll use [`Label Transfer`](https://satijalab.org/seurat/articles/integration_mapping.html) to analyze them more closely.
-```{r fig.width=12, fig.height=5}
+```{r fig.width=10, fig.height=4}
 DimPlot(querydata) | DimPlot(querydata, group.by = "orig.ident")
 ```
 
 ### Update Metadata
 
 The metadata slot is updated based on the experiment design.
+
+If a cell contains `mScarlet` transcript, it is denoted as `Transduced`, otherwise it is denoted as `Non-transduced`.
 ```{r}
 Idents(querydata) <- "orig.ident"
 querydata <- SetIdent(querydata, cells = WhichCells(querydata, expression = mScarlet > 0), value = "Transduced")
 querydata <- SetIdent(querydata, cells = WhichCells(querydata, expression = mScarlet == 0), value = "Non-transduced")
 querydata[["transduction"]] <- Idents(querydata)
+```
 
+Update batch labels.  
+Two AAV variants were used for different experiments (AAV-MG1.2 and AAV-MG1.1).
+```{r}
 Idents(querydata) <- "orig.ident"
 querydata <- RenameIdents(querydata, 
                           `yt-8-5` = "AAV-MG1.1", `yt-8-5-2` = "AAV-MG1.1", `yt-8-5-3` = "AAV-MG1.1",
@@ -256,6 +263,7 @@ querydata$treatment <- as.character(querydata$treatment)
 querydata$group <- as.character(querydata$group)
 querydata$transduce_serotype <- as.character(querydata$transduce_serotype)
 querydata$seurat_clusters <- as.integer(as.character(querydata$seurat_clusters))
+
 if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
 SaveH5Seurat(querydata, filename = '../data/AAV_MG_scRNAseq/cells_query.h5Seurat', overwrite = T)
 Convert('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', dest = "h5ad", overwrite = T)

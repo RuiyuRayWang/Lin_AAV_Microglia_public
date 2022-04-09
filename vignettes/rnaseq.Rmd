@@ -10,18 +10,20 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-### TL;DR
+## TL;DR
 
 You may click on the following links to fast forward to the codes directly producing the Figures:
 
   - [Figure 1_1](#Figure1_1)
   - [Figure 1_2](#Figure1_2)
 
-### Introduction
+## Introduction
 
 Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
 
 The study of microglia biology and the development of microglia-based gene therapies are in urgent need of efficient and safe vehicles for microglia transgene delivery. To address this, we developed adeno-associated virus (AAV) variants that mediate efficient in vitro and in vivo microglia transduction via directed evolution of the AAV capsid protein. To assess the effect of AAV transduction on microglia, we carried out bulk RNAseq in primary microglia and found that microglia transduced by AAV remain close to homeostatic state. Furthermore, single-cell RNA sequencing showed that the AAV-MG variants mediate safe in vivo transgene delivery without inducing microglia immune activation. These AAV variants should facilitate the applications of various genetically-encoded sensors and effectors in studying microglia-related biology and therapeutic interventions.
+
+### About this Vignette
 
 This vignette reproduces analyses related to bulk RNAseq in the original publication (Lin et al., 2022).  
 
@@ -33,15 +35,17 @@ Two batches of experiments were performed.
 The first batch of experiment aims to study the differences in microglia transcriptomes under different conditions. Microglia were treated with LPS, IL4, or AAV-cap18 to induce activation, alternative activation, or AAV transduction states. Three replicates were performed for each condition.  
 The second batch aims to investigate whether priming microglia with various factors introduce changes of the transcriptional states of microglia after AAV transduction.
 
-Full analysis pipeline:
-  
+### Analysis Outline
+
   - Salmon (Pseudo-alignment and quantification)
   - tximeta (Gene-level summarization)[^1]
   - DESeq2 (differential expression analysis)
 
+## Analyze the Data
+
 ### Load libraries and data
 
-Load reuiqred libraries.
+Load required libraries.
 ```{r}
 suppressPackageStartupMessages({
   library(SummarizedExperiment)
@@ -58,7 +62,7 @@ If you haven't done so, download data from GEO.
 ```{r}
 if(!file.exists('../data/GSE197743/GSE197743_AAV_MG_RNAseq.tsv.gz')){
   library(GEOquery)
-  options(timeout = 600)  ## In case of slow Internet connections
+  options(timeout = 6000)  ## In case of slow Internet connections
   getGEOSuppFiles(GEO = "GSE197743", makeDirectory = T, baseDir = '../data/')
 }
 ```
@@ -127,7 +131,7 @@ For exploratory analysis, it is common practice to work on the transformed count
 vsd <- vst(dds, blind = FALSE)
 ```
 
-#### Sample distance
+### Sample distance
 
 Sample distance provides a powerful and intuitive way to explore the states of the transcriptomes across samples.  
 To perform this analysis, we compute a sample distance matrix by the `dist()` function using the euclidean distance as metric.
@@ -154,7 +158,7 @@ dds$clusters <- as.factor(clusters)
 
 From this plot we see that triggers such as LPS or IL4 promoted distinct states in the transcriptional states of microglia. These were conventionally described as "Reactive" (LPS) or "Alternative activation" (IL4) states. On the other hand, while microglia underwent no treatment and microglia transduced with AAV-cap18 demonstrated a clear within-group homogeneity, they were characterized by a similar transcriptional state, as illustrated by the hierachical clustering results.
 
-#### PCA {#Figure1_1}
+### PCA {#Figure1_1}
 
 Pricipal component analysis provides another way of summarizing the microglia transcription states under different conditions.
 ```{r}
@@ -181,7 +185,7 @@ ggplot(pcaData, aes(x = PC1, y = PC2)) +
 
 Using clusters obtained from sample distance matrix, we use the `stat_ellipse` function to draw a 95% confidence level for a multivariate t-distribution of the PC coordinates.
 
-#### Visualize Gene Expression by Heatmap {#Figure1_2}
+### Visualize Gene Expression by Heatmap {#Figure1_2}
 
 To have a closer look at the microglia transcription states under different conditions, we use heatmap to plot the relative expression of canonical homeostatic and reactive marker genes.
 
