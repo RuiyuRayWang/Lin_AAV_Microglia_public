@@ -45,8 +45,8 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', verbose = F)
-query_transferred <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', verbose = F)
+querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/query_clean.h5Seurat', verbose = F)
+query_transferred <- LoadH5Seurat('../data/AAV_MG_scRNAseq/query_transferred.h5Seurat', verbose = F)
 refdata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', verbose = F)
 refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat', verbose = F)
 ```

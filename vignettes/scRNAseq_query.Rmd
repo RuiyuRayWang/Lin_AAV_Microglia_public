@@ -162,10 +162,10 @@ cells.filtered <- cells.filtered[keep_feature,]
 
 Back to Seurat object.
 ```{r}
-querydata <- as.Seurat(cells.filtered)
-querydata[["nCount_originalexp"]] <- NULL; querydata[["nFeature_originalexp"]] <- NULL
-querydata <- RenameAssays(querydata, originalexp = "RNA")
-querydata$ident <- NULL
+querydata_all <- as.Seurat(cells.filtered)
+querydata_all[["nCount_originalexp"]] <- NULL; querydata_all[["nFeature_originalexp"]] <- NULL
+querydata_all <- RenameAssays(querydata_all, originalexp = "RNA")
+querydata_all$ident <- NULL
 ```
 
 ### Standard Seurat Workflow
@@ -173,7 +173,7 @@ querydata$ident <- NULL
 ```{r}
 dims_use <- 1:25
 
-querydata <- querydata %>%
+querydata_all <- querydata_all %>%
   NormalizeData() %>%
   FindVariableFeatures() %>%
   ScaleData() %>%
@@ -186,12 +186,12 @@ querydata <- querydata %>%
 
 Remove cells NOT expressing the canonical microglia marker 'Hexb'. These are putatively low quality cells.
 ```{r fig.width=10, fig.height=4}
-FeaturePlot(querydata, features = "Hexb") | DimPlot(querydata, cells.highlight = WhichCells(querydata, expression = Hexb < 2))
+FeaturePlot(querydata_all, features = "Hexb") | DimPlot(querydata_all, cells.highlight = WhichCells(querydata_all, expression = Hexb < 2))
 ```
 
 Re-run Seurat workflow on subsetted data.
 ```{r}
-querydata <- subset(querydata, subset = Hexb > 2)
+querydata <- subset(querydata_all, subset = Hexb > 2)
 querydata <- querydata %>%
   NormalizeData() %>%
   FindVariableFeatures() %>%
@@ -265,8 +265,9 @@ querydata$transduce_serotype <- as.character(querydata$transduce_serotype)
 querydata$seurat_clusters <- as.integer(as.character(querydata$seurat_clusters))
 
 if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
-SaveH5Seurat(querydata, filename = '../data/AAV_MG_scRNAseq/cells_query.h5Seurat', overwrite = T, verbose = F)
-Convert('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
+SaveH5Seurat(querydata_all, filename = '../data/AAV_MG_scRNAseq/query_all.h5Seurat', overwrite = T, verbose = F)
+SaveH5Seurat(querydata, filename = '../data/AAV_MG_scRNAseq/query_clean.h5Seurat', overwrite = T, verbose = F)
+Convert('../data/AAV_MG_scRNAseq/query_clean.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
 ```
 
 ### Session info

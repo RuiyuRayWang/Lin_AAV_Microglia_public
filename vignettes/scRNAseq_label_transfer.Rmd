@@ -51,7 +51,7 @@ suppressPackageStartupMessages({
 Load the Seurat objects to workspace.
 ```{r}
 # Preprocessed, QCed Smart-seq2 microglia (Query dataset)
-querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', verbose = F)
+querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/query_clean.h5Seurat', verbose = F)
 
 # Preprocessed, QCed 10X (Reference dataset)
 refdata <- LoadH5Seurat(file = '../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', verbose = F)
@@ -169,8 +169,8 @@ refquery$ident <- as.character(refquery$ident)
 
 if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
 SaveH5Seurat(refquery, filename = '../data/AAV_MG_scRNAseq/refquery.h5Seurat', overwrite = T, verbose = F)
-SaveH5Seurat(query.transferred.filtered, filename = '../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', overwrite = T, verbose = F)
-Convert('../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
+SaveH5Seurat(query.transferred.filtered, filename = '../data/AAV_MG_scRNAseq/query_transferred.h5Seurat', overwrite = T, verbose = F)
+Convert('../data/AAV_MG_scRNAseq/query_transferred.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
 ```
 
 ### Session info
