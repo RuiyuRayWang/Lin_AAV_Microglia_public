@@ -39,6 +39,8 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(patchwork)
   library(RColorBrewer)
+  library(cvms)
+  library(epitools)
 })
 ```
 
@@ -54,9 +56,6 @@ refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat', verbose = 
 ### Figure 2a {#Figure2a}
 
 Schematics showing workflow of scRNAseq experiments and label transfer analysis.
-
-Depending on the use of CPU nodes, the UMAP coordinates computed on your machine may not entirely match what was shown in the original publication. This is a known [issue](https://github.com/lmcinnes/umap/issues/525) of the UMAP algorithm.  
-Nevertheless, the overall structure of the embedding is consistent, i.e. cells from LPS and AAV groups reside in different clusters. Therefore we conclude that the shifts in UMAP coordinates does not affect our biological interpretation.
 
 Query Dataset.
 ```{r}
@@ -293,8 +292,8 @@ g +
 
 ### Figure 2g {#Figure2g}
 
-Joint visualization by 'De novo' Recomputed UMAP of Query and Reference Datasets:
-
+Joint visualization by 'De novo' Recomputed UMAP of Query and Reference Datasets.  
+In the publication, this plot is rotated 180 degrees to provide better visualization.
 ```{r}
 as.data.frame(Embeddings(refquery[["umap"]])) %>%
   mutate(id = refquery$id, ident = refquery$ident) %>%

@@ -52,6 +52,7 @@ suppressPackageStartupMessages({
   library(SeuratDisk)
   library(scater)
   library(tidyverse)
+  library(scales)
 })
 ```
 
@@ -194,8 +195,9 @@ cells_sub <- cells_sub %>%
 
 Take a glance at the umap reduction plot.
 ```{r fig.width=6, fig.height=4}
-DimPlot(cells_sub, group.by = "treat")
+DimPlot(cells_sub, group.by = "treat", cols = hue_pal()(3)[c(3,2,1)])
 ```
+Depending on the use of CPU nodes or versions of the `umap` package, the UMAP coordinates computed on different machines may not entirely match what was shown in the original publication. This is a known [issue](https://github.com/lmcinnes/umap/issues/525) of the UMAP algorithm. Nevertheless, the overall structure of the embedding should be consistent, i.e. query cells from LPS and AAV groups reside in different clusters. Therefore we conclude that the shifts in UMAP coordinates does not affect our biological interpretation.
 
 ### Update Metadata
 
