@@ -1,6 +1,6 @@
 ---
 title: "Lin et al.: AAV Microglia"
-subtitle: "Figure 2"
+subtitle: "Label Transfer (Figure 2)"
 author: "Ruiyu Ray Wang"
 date: "`r Sys.Date()`"
 output: html_document
@@ -55,11 +55,10 @@ refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat', verbose = 
 
 ### Figure 2a {#Figure2a}
 
-Schematics showing workflow of scRNAseq experiments and label transfer analysis.
+Schematics showing the workflows of scRNAseq experiments and analysis.
 
-Query Dataset.
 ```{r}
-DimPlot(querydata, pt.size = 3, group.by = "group", cols = brewer.pal(n = 12, name = "Paired")[c(7,6)]) +
+f2a1 <- DimPlot(querydata, pt.size = 3, group.by = "group", cols = brewer.pal(n = 12, name = "Paired")[c(7,6)]) +
   ggtitle(NULL) +
   theme_minimal() +
   theme(
@@ -69,9 +68,8 @@ DimPlot(querydata, pt.size = 3, group.by = "group", cols = brewer.pal(n = 12, na
   )
 ```
 
-Reference Dataset.
 ```{r}
-DimPlot(refdata, group.by = "treat", pt.size = 2, shuffle = TRUE) +
+f2a2 <- DimPlot(refdata, group.by = "treat", pt.size = 2, shuffle = TRUE) +
   scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(5,3,1)])+
   theme_minimal() +
   ggtitle(NULL) +
@@ -82,9 +80,13 @@ DimPlot(refdata, group.by = "treat", pt.size = 2, shuffle = TRUE) +
   )
 ```
 
+```{r fig.width=5, fig.height=8}
+f2a1 / f2a2
+```
+
 ### Figure 2b-d
 
-Descriptive analysis of the Query Dataset (Smart-seq2). Discrimination of "Transduced" and "Untransduced" cells are based on whether *mScarlet* transcripts are expressed in the cells (cells is "Transduced" if mScarlet > 0).
+Descriptive analysis of the Query Dataset (Smart-seq2). Discrimination of "Transduced" and "Untransduced" cells are based on whether *mScarlet* transcripts are expressed in the cells (cell is "Transduced" if mScarlet > 0).
 
 ### Figure 2b {#Figure2b}
 
@@ -287,14 +289,13 @@ g +
   theme(
     text = element_text(size = 18)
   )
-
 ```
 
 ### Figure 2g {#Figure2g}
 
 Joint visualization by 'De novo' Recomputed UMAP of Query and Reference Datasets.  
-In the publication, this plot is rotated 180 degrees to provide better visualization.
-```{r}
+In the publication, this plot is rotated 180 degrees for better visualization.
+```{r fig.width=6, fig.height=5}
 as.data.frame(Embeddings(refquery[["umap"]])) %>%
   mutate(id = refquery$id, ident = refquery$ident) %>%
   ggplot(mapping = aes(x = UMAP_1, y = UMAP_2, color = ident, group = id)) +

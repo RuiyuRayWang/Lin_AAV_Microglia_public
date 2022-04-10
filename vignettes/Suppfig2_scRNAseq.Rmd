@@ -1,12 +1,12 @@
 ---
-title: "Supplementary Figure 2: Label Transfer Query/Reference Data"
+title: 'Lin et al.: AAV Microglia'
+subtitle: 'Supplementary Figure 2'
 author: "Ruiyu Ray Wang"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-rm(list = ls(all.names = TRUE))
+```{r include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
@@ -14,9 +14,9 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 ```{r}
 suppressPackageStartupMessages({
-  library(scater)
   library(Seurat)
   library(SeuratDisk)
+  library(scater)
   library(tidyverse)
   library(ggplot2)
   library(patchwork)
@@ -25,18 +25,10 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-suppressMessages(
-  extrafont::loadfonts(device="postscript")
-)
-```
-
-# Initialization
-
-```{r}
-querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query.h5Seurat')
-query_transferred <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat')
-refdata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat')
-refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat')
+querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/query_clean.h5Seurat', verbose = F)
+query_transferred <- LoadH5Seurat('../data/AAV_MG_scRNAseq/query_transferred.h5Seurat', verbose = F)
+refdata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', verbose = F)
+refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat', verbose = F)
 ```
 
 # Making Plots
@@ -46,9 +38,6 @@ refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat')
 ### Reference data (10x)
 
 ```{r}
-data <- Read10X(data.dir = '../data/AAV_MG_scRNAseq/MGREF_AGGR/outs/count/filtered_feature_bc_matrix/')
-refdata_raw <- CreateSeuratObject(data, project = "MG_REF", names.field = 2, names.delim = "-")
-
 # Setup metadata
 Idents(refdata_raw) <- "orig.ident"
 refdata_raw <- RenameIdents(refdata_raw, `1` = "MG_S", `2` = "MG_P", `3` = "MG_L")
@@ -93,24 +82,7 @@ refdata_filtered$ident <- NULL
 
 refdata_filtered <- refdata_filtered %>% NormalizeData() %>% FindVariableFeatures() %>% ScaleData() %>% RunPCA() %>% FindNeighbors(dims = 1:50) %>% FindClusters() %>% RunUMAP(dims = 1:50)
 
-load(file = '../data/AAV_MG_scRNAseq/mg_keep_refdat.rda')
-```
-
-```{r}
-# refdata_raw <- refdata_raw %>% NormalizeData() %>% FindVariableFeatures() %>% ScaleData() %>% RunPCA() %>% FindNeighbors(dims = 1:50) %>% FindClusters() %>% RunUMAP(dims = 1:50)
-# 
-# d1 <- DimPlot(refdata_raw, cells.highlight = colnames(ref.sce)[ref.sce@colData$discard]) + 
-#   NoLegend() + ggtitle("Discard")
-# d2 <- DimPlot(refdata_raw, cells.highlight = colnames(ref.sce)[ref.sce@colData$low_lib_size]) + 
-#   NoLegend() + ggtitle("low lib size")
-# d3 <- DimPlot(refdata_raw, cells.highlight = colnames(ref.sce)[ref.sce@colData$low_n_features]) + 
-#   NoLegend() + ggtitle("low n features")
-# d4 <- DimPlot(refdata_raw, cells.highlight = colnames(ref.sce)[ref.sce@colData$high_subsets_Mito_percent]) + 
-#   NoLegend() + ggtitle("high Mito %")
-# d5 <- DimPlot(refdata_raw, cells.highlight = colnames(ref.sce)[ref.sce@colData$high_subsets_Ribo_percent]) + 
-#   NoLegend() + ggtitle("high Ribo %")
-# 
-# (d1 | d2 | d3) / (plot_spacer() | d4 | d5)
+load(file = '../miscs/mg_sub.rda')
 ```
 
 #### Supplementary Figure 2a
@@ -136,11 +108,6 @@ as.data.frame(colData(ref.sce)[,c("nCount_RNA","nFeature_RNA","discard_size_comp
     legend.text = element_text(size = 16),
     legend.margin = margin(1, 5, 5, 5)
     )
-ggsave(filename = "refdataQC_numi_ngene.eps", 
-       device = "eps", 
-       path = "../outs/Figsupp2abcd/", 
-       width = 4, height = 3.6, 
-       family = "Arial")
 ```
 
 #### Supplementary Figure 2b
@@ -160,11 +127,6 @@ as.data.frame(colData(ref.sce)[,c("treat","subsets_Mito_percent","high_subsets_M
     axis.text.x = element_text(size = 16),
     axis.title = element_text(size = 20),
     )
-ggsave(filename = "refdataQC_vln_pctmito.eps", 
-       device = "eps", 
-       path = "../outs/Figsupp2abcd/", 
-       width = 3.2, height = 3.6, 
-       family = "Arial")
 ```
 
 #### Supplementary Figure 2c
@@ -184,17 +146,11 @@ as.data.frame(colData(ref.sce)[,c("treat","subsets_Ribo_percent","high_subsets_R
     axis.text.x = element_text(size = 16),
     axis.title = element_text(size = 20),
     )
-ggsave(filename = "refdataQC_vln_pctribo.eps", 
-       device = "eps", 
-       path = "../outs/Figsupp2abcd/", 
-       width = 3.2, height = 3.6, 
-       family = "Arial")
 ```
 
 #### Supplementary Figure 2d
 
 ```{r}
-refdata$treat <- factor(refdata$treat, levels = c("Saline","Poly(i:c)","LPS"))
 umap_reff1 <- FeaturePlot(refdata_filtered, features = "Hexb") +
   ggtitle("Hexb") +
   theme(
@@ -219,6 +175,8 @@ umap_reff2 <- DimPlot(refdata_filtered, cells.highlight = mg_keep_refdat) +
     axis.line = element_line(arrow = grid::arrow(length = unit(0.3, "cm"), 
                                                  ends = "last", type = "closed"))
   )
+
+refdata$treat <- factor(refdata$treat, levels = c("Saline","Poly(i:c)","LPS"))
 umap_reff3 <- DimPlot(refdata, group.by = "treat") +
   scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)], 
                      labels = c("Saline", "Poly(i:c)", "LPS")) +
@@ -238,11 +196,6 @@ umap_reff3 <- DimPlot(refdata, group.by = "treat") +
   )
 
 umap_reff1 | umap_reff2 | umap_reff3
-ggsave(filename = "umap_refdataQC_retained.eps", 
-       device = "eps", 
-       path = "../outs/Figsupp2abcd/", 
-       width = 15, height = 5, 
-       family = "Arial")
 ```
 
 ### Query Data (Smart-seq2)

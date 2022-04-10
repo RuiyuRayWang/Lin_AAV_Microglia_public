@@ -1,0 +1,416 @@
+---
+title: 'Lin et al.: AAV Microglia'
+subtitle: 'scRNA-seq Query Dataset: Smartseq2'
+author: "Ruiyu Ray Wang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Introduction
+
+Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
+
+The study of microglia biology and the development of microglia-based gene therapies are in urgent need of efficient and safe vehicles for microglia transgene delivery. To address this, we developed adeno-associated virus (AAV) variants that mediate efficient in vitro and in vivo microglia transduction via directed evolution of the AAV capsid protein. To assess the effect of AAV transduction on microglia, we carried out bulk RNAseq in primary microglia and found that microglia transduced by AAV remain close to homeostatic state. Furthermore, single-cell RNA sequencing showed that the AAV-MG variants mediate safe in vivo transgene delivery without inducing microglia immune activation. These AAV variants should facilitate the applications of various genetically-encoded sensors and effectors in studying microglia-related biology and therapeutic interventions.
+
+### About this Vignette
+
+This vignette illustrates the steps by which the query data (Smartseq2) was processed, as well as some of the Supplementary Figures in the original publication (Lin et al., 2022).  
+Here we only show how plain plots were generated directly from data. To reach the final illustrations in the publication, these plots may require further editing in graphic design softwares (i.e. Adobe Illustrator). Those beautification steps are not central to our analysis and therefore will be omitted.
+
+The input file of this vignette is a feature-barcode-count table (`GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz`) produced by the Snakemake pipeline [`ScRNAseq_smkpipe_at_Luolab`](https://github.com/RuiyuRayWang/ScRNAseq_smkpipe_at_Luolab). The output is a processed `.h5Seurat` with metadata slot filled.
+
+## TL;DR
+
+You may click on the following links to fast forward to the codes directly producing the Figures:
+
+  - [Supplementary Figure 2e](#FigS2e)
+  - [Supplementary Figure 2f](#FigS2f)
+  - [Supplementary Figure 2g](#FigS2g)
+  - [Supplementary Figure 2h](#FigS2h)
+
+### Overview of the experiments
+
+Microglia were isolated from adult mice (~8w) using a method based on the "cold-mechanical dissociation" protocol (Bennett et al., 2016)[^1]. The steps involving FACS sorting from the original protocol was omitted to minimize *ex vivo* activation of microglia.
+
+We found that the single cell transcriptome acquired by 10X Chromium (3' Chemistry v3) captured transcripts of the AAV-packaged transgene (mScarlet) at a very low rate (data not published). Therefore we carried out deep single cell sequencing using a modified protocol based on a customized Smart-seq2 protocol (Zhang et al., 2020)[^2] on microglia isolated from mice subjected to stereotaxic AAV injection. The Smart-seq2 based method captured mScarlet transcripts with substantially higher efficiently.
+
+To characterize the microglia transcriptomes under immune activation, we isolated microglia from mice subjected to Saline, Poly(i:c) and LPS treatment (i.p.), and performed scRNA-seq using the 10X Chromium platform.
+
+### Analysis Outline
+
+Upstream analysis pipelines (i.e. sequence alignment, generation of digital expression matrix, etc.):
+
+  * For Smart-seq2, fastq files were processed by a [custom Snakemake workflow](https://github.com/RuiyuRayWang/ScRNAseq_smkpipe_at_Luolab) to generate the expression table (feature-barcode-count matrix).
+  * For 10X, fastq files from 3 mice were quantified by CellRanger (v6.0.1) using the `cellranger count` command and then aggregated using the `cellranger aggr` command.
+
+Downstream analysis:
+
+  * Preprocessing and QC (`scater`)
+  * Seurat Standard Workflow (`Seurat`)
+  * Label Transfer (`Seurat`)
+
+## Pre-processing
+
+### Load libraries and data
+
+Load reuiqred libraries.
+```{r}
+suppressPackageStartupMessages({
+  library(Seurat)
+  library(SeuratDisk)
+  library(scater)
+  library(tidyverse)
+  library(RColorBrewer)
+})
+```
+
+If you haven't done so, download data from GEO.
+```{r}
+if(!file.exists('../data/GSE197743/GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz')){
+  library(GEOquery)
+  options(timeout = 6000)  ## In case of slow Internet connections
+  getGEOSuppFiles(GEO = "GSE197743", makeDirectory = T, baseDir = '../data/')
+}
+```
+
+Load the data matrix to workspace.
+```{r}
+data_long <- read.table(file = '../data/GSE197743/GSE197743_AAV_MG_SMARTSEQ2_counts.tsv.gz', sep = "\t", header = TRUE)  # Raw table from ScRNAseq_smkpipe_at_Luolab
+data <- pivot_wider(data_long, names_from = "cell", values_from = "count", values_fill = 0)  # Expression matrix
+```
+
+Rename Ensembl ID to Gene symbol.
+```{r}
+# `../miscs/MM.GRCm38.102.annotation.tab` is generated by running `../misc/awk_extract_gtf.sh` on the annotation file (Mus_musculus.GRCm38.102.chr.mScarlet_WPRE.gtf)
+anno <- read.table(file = '../miscs/MM.GRCm38.102.annotation.tab', sep = "\t", col.names = c("ensembl_id", "symbol"))
+```
+
+```{r}
+# Custom function to rename rows from dataframe
+renameRows <- function(df, anno){
+  stopifnot(is.data.frame(df))
+  stopifnot("ensembl_id" %in% colnames(anno) | "symbol" %in% colnames(anno))
+  
+  if(any(!rownames(df) %in% anno$ensembl_id)){
+    df <- dplyr::slice(df, -which(!rownames(df) %in% anno$ensembl_id))  # df may contain rows not in the annotation table. Remove these rows.
+  }
+  rn <- rownames(df)
+  rn <- anno[match(rn,anno$ensembl_id),"symbol"]
+  dup <- rn[duplicated(rn)]
+  print(paste0("The following genes names are duplicated: ", paste0(dup, collapse = ", "), ". Making unique."))
+  for (d in dup){
+    count = 0
+    for (i in 1:length(rn)){
+      if (rn[i] == d) {
+        count = count+1
+        if (count>1){
+          rn[i] = paste0(rn[i],"-",count)
+        }
+      }
+    }
+  }
+  rownames(df) <- rn
+  return(df)
+}
+```
+```{r}
+data <- data %>% column_to_rownames(var = "gene") %>% as.data.frame()
+data <- renameRows(data, anno)
+```
+
+Transgene (mScarlet) should be moved to metadata slot to avoid its impact on downstream analyses.
+```{r}
+ms <- data.frame(t(data["mScarlet",])); colnames(ms) <- "mScarlet"
+data <- data[-which(rownames(data) == "mScarlet"),]
+```
+
+Create Seurat object.
+```{r}
+cells <- CreateSeuratObject(data, project = "AAV_Microglia", names.field = 2, names.delim = "_", meta.data = ms)
+cells$batch <- cells$orig.ident
+cells$id <- "Query"
+cells$tech <- "Smart-seq2"
+```
+
+### Update Metadata
+
+The metadata slot is updated based on the experiment design.
+
+If a cell contains `mScarlet` transcript, it is denoted as `Transduced`, otherwise it is denoted as `Untransduced`.
+```{r}
+Idents(cells) <- "orig.ident"
+cells <- SetIdent(cells, cells = WhichCells(cells, expression = mScarlet > 0), value = "Transduced")
+cells <- SetIdent(cells, cells = WhichCells(cells, expression = mScarlet == 0), value = "Untransduced")
+cells[["transduction"]] <- Idents(cells)
+```
+
+Update batch labels.  
+Two AAV variants were used for different experiments (AAV-MG1.2 and AAV-MG1.1).
+```{r}
+Idents(cells) <- "orig.ident"
+cells <- RenameIdents(cells, 
+                      `yt-8-5` = "AAV-MG1.1", `yt-8-5-2` = "AAV-MG1.1", `yt-8-5-3` = "AAV-MG1.1",
+                      `yt-8-5-4` = "AAV-MG1.1", `yt-8-5-6` = "AAV-MG1.1", `yt-8-5-5` = "AAV-MG1.1",
+                      `yt-8-6-1` = "AAV-MG1.2", `yt-8-6-2` = "AAV-MG1.2", `yt-8-6-3` = "AAV-MG1.2", 
+                      `yt-8-6-4` = "AAV-MG1.2", `yt-8-6-5` = "AAV-MG1.2", `yt-8-6-6` = "AAV-MG1.2",
+                      `yt-mgl-L1` = "LPS", `yt-mgl-L2` = "LPS", `yt-mgl-L3` = "LPS")
+cells[["treatment"]] <- Idents(cells)
+cells[["treatment"]] <- factor(cells$treatment, 
+                               levels = c("AAV-MG1.2", "AAV-MG1.1","LPS"))
+
+Idents(cells) <- "treatment"
+cells <- RenameIdents(cells, `AAV-MG1.1` = "AAV", `AAV-MG1.2` = "AAV")
+cells[["group"]] <- Idents(cells)
+
+Idents(cells) <- "treatment"
+cells <- SetIdent(cells, 
+                  cells = WhichCells(cells,
+                                     expression = transduction == "Untransduced" & 
+                                       treatment %in% c("AAV-MG1.1","AAV-MG1.2")), 
+                  value = "Untransduced")
+cells[["transduce_serotype"]] <- Idents(cells)
+cells[["transduce_serotype"]] <- factor(cells$transduce_serotype, 
+                                        levels = c("Untransduced","AAV-MG1.2", "AAV-MG1.1","LPS"))
+
+cells[["mScarlet_norm"]] <- log1p(cells[["mScarlet"]]/cells[["nCount_RNA"]]*1e4)
+```
+
+### Quality Control (QC)
+
+We use the `scater`[^3] package for quality control (QC) of the single cell datasets
+```{r}
+# cells <- DietSeurat(cells)
+cells.sce <- as.SingleCellExperiment(cells)
+cells.sce <- logNormCounts(cells.sce)
+dim(cells.sce)
+```
+
+#### Cell level QC
+
+```{r}
+per.cell <- perCellQCMetrics(cells.sce,
+                             subsets = list(Mito = grep("^mt-", rownames(cells.sce)),
+                                            Ribo = grep("\\bRp[sl]\\d+[^k]*\\b", rownames(cells.sce))))
+
+qc.stats <- quickPerCellQC(per.cell, percent_subsets = c("subsets_Mito_percent","subsets_Ribo_percent"))
+qc.stats$discard_size_complexity <- qc.stats$low_lib_size | qc.stats$low_n_features
+
+qc.stats$discard_size_complexity <- qc.stats$low_lib_size | qc.stats$low_n_features
+
+colData(cells.sce) <- cbind(colData(cells.sce), cbind(per.cell, qc.stats))
+colSums(as.matrix(qc.stats))
+```
+```{r}
+cells.filtered <- cells.sce[,!qc.stats$discard]
+```
+
+#### Feature level QC
+
+```{r}
+keep_feature <- nexprs(cells.filtered, byrow=TRUE) > 0
+
+## Remove mitochondrial and ribosomal genes which does not contribute to dimensionality reduction and clustering
+keep_feature[grep("\\bRp[sl]\\d+[^k]*\\b", rownames(cells.sce))] <- FALSE
+keep_feature[grep("mt-", rownames(cells.sce))] <- FALSE
+cells.filtered <- cells.filtered[keep_feature,]
+```
+
+Back to Seurat object.
+```{r}
+querydata <- as.Seurat(cells.filtered)
+querydata[["nCount_originalexp"]] <- NULL; querydata[["nFeature_originalexp"]] <- NULL
+querydata <- RenameAssays(querydata, originalexp = "RNA")
+querydata$ident <- NULL
+```
+
+Cells expressing low level of the canonical microglia marker 'Hexb' were removed. These are putatively low quality cells.
+```{r}
+querydata <- NormalizeData(querydata)
+querydata <- subset(querydata, subset = Hexb > 2)
+```
+
+### Standard Seurat Workflow
+
+Raw data.
+```{r}
+dims_use <- 1:25
+
+cells <- cells %>%
+  NormalizeData() %>%
+  FindVariableFeatures() %>%
+  ScaleData() %>%
+  RunPCA(npcs = 50) %>%
+  FindNeighbors(dims = dims_use) %>%
+  RunUMAP(dims = dims_use)
+```
+
+Filtered data.
+```{r}
+dims_use <- 1:25
+
+querydata <- querydata %>%
+  NormalizeData() %>%
+  FindVariableFeatures() %>%
+  ScaleData() %>%
+  RunPCA(npcs = 50) %>%
+  FindNeighbors(dims = dims_use) %>%
+  FindClusters(resolution = 0.8) %>%
+  RunUMAP(dims = dims_use)
+```
+
+## Making plots
+
+A general note on the UMAP visualizations:  
+Depending on the use of CPUs and versions of the `umap` algorithm, the UMAP coordinates computed on different machines may not entirely match what was shown in the original publication. This is a known [issue](https://github.com/lmcinnes/umap/issues/525) of the UMAP algorithm. Nevertheless, the overall structure of the UMAP embedding should be consistent, i.e. microglia from mouse subjected to Saline, Poly(i:c) and LPS groups reside in different clusters. We've tested this on different computing platforms and reached the conclution that the shifts in UMAP coordinates does not affect our biological interpretation.
+
+### Supplementary Figure 2e {#FigS2e}
+
+```{r fig.width=5, fig.height=3.6}
+as.data.frame(colData(cells.sce)[,c("nCount_RNA","nFeature_RNA","discard_size_complexity")]) %>%
+  ggplot(mapping = aes(x=nCount_RNA, y=nFeature_RNA)) +
+  geom_point(aes(color = discard_size_complexity), size = 1.2) +
+  # ggtitle("Reference Data (10x)") +
+  scale_color_manual(values = brewer.pal(n = 6,name = "Paired")[c(2,6)], labels = c("Kept","Removed"), name = "") +
+  scale_x_continuous(expand = c(0.15,0.1)) +
+  xlab("UMI counts") +
+  ylab("Gene counts") +
+  theme_classic() +
+  theme(
+    # plot.title = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 16),
+    axis.title = element_text(size = 21),
+    legend.title = element_blank(),
+    legend.box.background = element_blank(),
+    legend.position = c(.95, .05),
+    legend.justification = c("right", "bottom"),
+    legend.text = element_text(size = 16),
+    legend.margin = margin(1, 5, 5, 5)
+    )
+```
+
+### Supplementary Figure 2f {#FigS2f}
+
+```{r fig.width=3, fig.height=3.6}
+as.data.frame(colData(cells.sce)[,c("treatment","subsets_Mito_percent","high_subsets_Mito_percent")]) %>%
+  mutate(treatment = factor(treatment, levels = c("AAV-MG1.1","AAV-MG1.2","LPS"))) %>%
+  ggplot(mapping = aes(x=treatment, y=subsets_Mito_percent)) +
+  geom_violin() +
+  geom_jitter(mapping = aes(color = high_subsets_Mito_percent), size = 0.3, height = 0, width = 0.1) +
+  scale_x_discrete(labels = c("AAV-\nMG-1.1","AAV-\nMG-1.2","LPS")) +
+  scale_color_manual(values = brewer.pal(n = 6,name = "Paired")[c(2,6)]) +
+  xlab(NULL) +
+  ylab("Mitochondrial RNA %") +
+  theme_linedraw() +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_text(size = 14),
+    axis.text.x = element_text(size = 16),
+    axis.title = element_text(size = 20),
+    )
+```
+
+### Supplementary Figure 2g {#FigS2g}
+
+```{r fig.width=3, fig.height=3.6}
+as.data.frame(colData(cells.sce)[,c("treatment","subsets_Ribo_percent","high_subsets_Ribo_percent")]) %>%
+  mutate(treatment = factor(treatment, levels = c("AAV-MG1.1","AAV-MG1.2","LPS"))) %>%
+  ggplot(mapping = aes(x=treatment, y=subsets_Ribo_percent)) +
+  geom_violin() +
+  geom_jitter(mapping = aes(color = high_subsets_Ribo_percent), size = 0.3, height = 0, width = 0.1) +
+  scale_x_discrete(labels = c("AAV-\nMG-1.1","AAV-\nMG-1.2","LPS")) +
+  scale_color_manual(values = brewer.pal(n = 6,name = "Paired")[c(2,6)]) +
+  xlab(NULL) +
+  ylab("Ribosomal RNA %") +
+  theme_linedraw() +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_text(size = 14),
+    axis.text.x = element_text(size = 16),
+    axis.title = element_text(size = 20),
+    )
+```
+
+### Supplementary Figure 2h {#FigS2h}
+
+```{r}
+umap_queryf1 <- FeaturePlot(cells, features = "Hexb") +
+  ggtitle("Hexb") +
+  theme(
+    plot.title = element_text(hjust = 0, size = 24),
+    axis.ticks = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_text(size = 18),
+    axis.line = element_line(arrow = grid::arrow(length = unit(0.3, "cm"),
+                                                       ends = "last", type = "closed")),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 16),
+    legend.position = c(.05, .20)
+  )
+
+umap_queryf2 <- DimPlot(cells, cells.highlight = colnames(cells.sce)[!cells.sce@colData$discard]) +
+  NoLegend() +
+  ggtitle("Retained Cells") +
+  theme(
+    plot.title = element_text(hjust = 0, size = 24),
+    axis.ticks = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_text(size = 18),
+    axis.line = element_line(arrow = grid::arrow(length = unit(0.3, "cm"),
+                                                 ends = "last", type = "closed"))
+  )
+
+umap_queryf3 <- DimPlot(querydata, group.by = "treatment") +
+  scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(12,8,6)],
+                     labels = c("AAV-MG1.1", "AAV-MG1.2", "LPS")) +
+  ggtitle("Final Query") +
+  guides(color = guide_legend(override.aes = list(size=3), byrow = TRUE)) +
+  theme(
+    plot.title = element_text(hjust = 0, size = 24),
+    axis.ticks = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_text(size = 18),
+    axis.line = element_line(arrow = grid::arrow(length = unit(0.3, "cm"),
+                                                 ends = "last", type = "closed")),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 20),
+    legend.position = c(.55, .18),
+    legend.spacing.y = unit(0.25, 'cm')
+  )
+```
+
+In the figure below, we can clearly see that microglia from LPS treated mice were primed and adopted a distinct transcriptomic state. Later, we'll use [`Label Transfer`](https://satijalab.org/seurat/articles/integration_mapping.html) to analyze them more closely.
+```{r fig.width=12, fig.height=4}
+umap_queryf1 | umap_queryf2 | umap_queryf3
+```
+
+## Save Results
+
+Backup the processed Seurat object using `h5` format.
+```{r}
+## Avoid using factor while saving to other formats
+querydata$orig.ident <- as.character(querydata$orig.ident)
+querydata$batch <- as.character(querydata$batch)
+querydata$transduction <- as.character(querydata$transduction)
+querydata$treatment <- as.character(querydata$treatment)
+querydata$group <- as.character(querydata$group)
+querydata$transduce_serotype <- as.character(querydata$transduce_serotype)
+querydata$seurat_clusters <- as.integer(as.character(querydata$seurat_clusters))
+
+if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
+SaveH5Seurat(querydata, filename = '../data/AAV_MG_scRNAseq/query_clean.h5Seurat', overwrite = T, verbose = F)
+Convert('../data/AAV_MG_scRNAseq/query_clean.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
+```
+
+### Session info
+
+```{r}
+sessionInfo()
+```
+
+[^1]: Bennett, M. L. et al. New tools for studying microglia in the mouse and human CNS. Proc Natl Acad Sci USA 113, E1738 (2016).
+[^2]: Zhang, S. et al. Single-cell transcriptomics identifies divergent developmental lineage trajectories during human pituitary development. Nat Commun 11, 5275 (2020).
+[^3]: McCarthy, D. J., Campbell, K. R., Lun, A. T. L. & Wills, Q. F. Scater: pre-processing, quality control, normalization and visualization of single-cell RNA-seq data in R. Bioinformatics btw777 (2017) doi:10.1093/bioinformatics/btw777.
