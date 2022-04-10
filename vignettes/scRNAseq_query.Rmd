@@ -212,11 +212,11 @@ DimPlot(querydata) | DimPlot(querydata, group.by = "orig.ident")
 
 The metadata slot is updated based on the experiment design.
 
-If a cell contains `mScarlet` transcript, it is denoted as `Transduced`, otherwise it is denoted as `Non-transduced`.
+If a cell contains `mScarlet` transcript, it is denoted as `Transduced`, otherwise it is denoted as `Untransduced`.
 ```{r}
 Idents(querydata) <- "orig.ident"
 querydata <- SetIdent(querydata, cells = WhichCells(querydata, expression = mScarlet > 0), value = "Transduced")
-querydata <- SetIdent(querydata, cells = WhichCells(querydata, expression = mScarlet == 0), value = "Non-transduced")
+querydata <- SetIdent(querydata, cells = WhichCells(querydata, expression = mScarlet == 0), value = "Untransduced")
 querydata[["transduction"]] <- Idents(querydata)
 ```
 
@@ -241,12 +241,12 @@ querydata[["group"]] <- Idents(querydata)
 Idents(querydata) <- "treatment"
 querydata <- SetIdent(querydata, 
                       cells = WhichCells(querydata,
-                                         expression = transduction == "Non-transduced" & 
+                                         expression = transduction == "Untransduced" & 
                                            treatment %in% c("AAV-MG1.1","AAV-MG1.2")), 
-                      value = "Non-transduced")
+                      value = "Untransduced")
 querydata[["transduce_serotype"]] <- Idents(querydata)
 querydata[["transduce_serotype"]] <- factor(querydata$transduce_serotype, 
-                                            levels = c("Non-transduced","AAV-MG1.2", "AAV-MG1.1","LPS"))
+                                            levels = c("Untransduced","AAV-MG1.2", "AAV-MG1.1","LPS"))
 
 querydata[["mScarlet_norm"]] <- log1p(querydata[["mScarlet"]]/querydata[["nCount_RNA"]]*1e4)
 ```
@@ -265,8 +265,8 @@ querydata$transduce_serotype <- as.character(querydata$transduce_serotype)
 querydata$seurat_clusters <- as.integer(as.character(querydata$seurat_clusters))
 
 if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
-SaveH5Seurat(querydata, filename = '../data/AAV_MG_scRNAseq/cells_query.h5Seurat', overwrite = T)
-Convert('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', dest = "h5ad", overwrite = T)
+SaveH5Seurat(querydata, filename = '../data/AAV_MG_scRNAseq/cells_query.h5Seurat', overwrite = T, verbose = F)
+Convert('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
 ```
 
 ### Session info

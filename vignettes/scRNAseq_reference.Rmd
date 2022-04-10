@@ -220,8 +220,8 @@ cells_sub$RNA_snn_res.0.8 <- as.integer(as.character(cells_sub$RNA_snn_res.0.8))
 cells_sub$seurat_clusters <- as.integer(as.character(cells_sub$seurat_clusters))
 
 if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
-SaveH5Seurat(cells_sub, filename = '../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', overwrite = T)
-Convert('../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', dest = "h5ad", overwrite = T)
+SaveH5Seurat(cells_sub, filename = '../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', overwrite = T, verbose = F)
+Convert('../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
 ```
 
 ### Session info

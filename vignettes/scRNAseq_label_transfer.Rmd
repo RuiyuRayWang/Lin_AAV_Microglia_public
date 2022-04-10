@@ -50,8 +50,11 @@ suppressPackageStartupMessages({
 
 Load the Seurat objects to workspace.
 ```{r}
-querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query.h5Seurat')  # Preprocessed, QCed Smart-seq2 microglia (Query dataset)
-refdata <- LoadH5Seurat(file = '../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat')  # Preprocessed, QCed 10X (Reference dataset)
+# Preprocessed, QCed Smart-seq2 microglia (Query dataset)
+querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', verbose = F)
+
+# Preprocessed, QCed 10X (Reference dataset)
+refdata <- LoadH5Seurat(file = '../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', verbose = F)
 ```
 
 ```{r fig.width=10, fig.height=4}
@@ -91,7 +94,7 @@ query.transferred <- MapQuery(
 )
 ```
 
-According to Stuart et al. (2018)[^1], queried cells with predictions score lower than 0.8 are likely incorrect. Here, we see a small fraction of cells with this low prediction scores. For the purpose of illustration, we filter out these cells. Once this is done, the reference and query objects are merged into a single object called `refquery`.
+According to Stuart et al.(2019)[^1], queried cells with predictions score lower than 0.8 are likely incorrect. Here, we see a small fraction of cells with this low prediction scores. For the purpose of illustration, we filter out these cells. Once this is done, the reference and query objects are merged into a single object called `refquery`.
 ```{r fig.width=5, fig.height=4}
 query.transferred <- SetIdent(query.transferred, cells = WhichCells(query.transferred, expression = predicted.treat.score < 0.8), value = "low")
 query.transferred <- SetIdent(query.transferred, cells = WhichCells(query.transferred, expression = predicted.treat.score >= 0.8), value = "high")
@@ -165,9 +168,9 @@ refquery$state <- as.character(refquery$state)
 refquery$ident <- as.character(refquery$ident)
 
 if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
-SaveH5Seurat(refquery, filename = '../data/AAV_MG_scRNAseq/refquery.h5Seurat', overwrite = T)
-SaveH5Seurat(query.transferred.filtered, filename = '../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', overwrite = T)
-Convert('../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', dest = "h5ad", overwrite = T)
+SaveH5Seurat(refquery, filename = '../data/AAV_MG_scRNAseq/refquery.h5Seurat', overwrite = T, verbose = F)
+SaveH5Seurat(query.transferred.filtered, filename = '../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', overwrite = T, verbose = F)
+Convert('../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
 ```
 
 ### Session info
@@ -176,4 +179,5 @@ Convert('../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', dest = "h5ad
 sessionInfo()
 ```
 
-[^1]: 
+[^1]: Stuart, T. et al. Comprehensive Integration of Single-Cell Data. Cell 177, 1888-1902.e21 (2019).
+

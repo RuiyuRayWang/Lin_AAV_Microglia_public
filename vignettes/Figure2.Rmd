@@ -1,16 +1,35 @@
 ---
-title: "Main Figure: Label Transfer"
+title: "Lin et al.: AAV Microglia"
+subtitle: "Figure 2"
 author: "Ruiyu Ray Wang"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-rm(list = ls(all.names = TRUE))
+```{r include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-# Initialization
+## About this vignette
+
+This vignette aims to reproduces Figure 2 in the original publication (Lin et al., 2022).
+
+Here we only show how plain plots were generated directly from data. To reach the final illustrations in the publication, these plots requires further editing in graphic design softwares (i.e. Adobe Illustrator). Those beautification steps are not central to our analysis and therefore will be omitted.
+
+## TL;DR
+
+You may click on the following links to fast forward to the codes directly producing the Figures:
+
+  - [Figure 2a](#Figure2a)
+  - [Figure 2b](#Figure2b)
+  - [Figure 2c](#Figure2c)
+  - [Figure 2d](#Figure2d)
+  - [Figure 2e](#Figure2e)
+  - [Figure 2f](#Figure2f)
+  - [Figure 2g](#Figure2g)
+  - [Figure 2h](#Figure2h)
+
+## Initialization
 
 ```{r}
 suppressPackageStartupMessages({
@@ -24,74 +43,65 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-suppressMessages(
-  extrafont::loadfonts(device="postscript")
-)
+querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query.h5Seurat', verbose = F)
+query_transferred <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat', verbose = F)
+refdata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', verbose = F)
+refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat', verbose = F)
 ```
 
-```{r}
-querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query.h5Seurat')
-query_transferred <- LoadH5Seurat('../data/AAV_MG_scRNAseq/cells_query_transferred.h5Seurat')
-refdata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat')
-refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat')
-```
+## Making Plots
 
-# Making Plots
-
-## Figure 2a
+### Figure 2a {#Figure2a}
 
 Schematics showing workflow of scRNAseq experiments and label transfer analysis.
 
+Depending on the use of CPU nodes, the UMAP coordinates computed on your machine may not entirely match what was shown in the original publication. This is a known [issue](https://github.com/lmcinnes/umap/issues/525) of the UMAP algorithm.  
+Nevertheless, the overall structure of the embedding is consistent, i.e. cells from LPS and AAV groups reside in different clusters. Therefore we conclude that the shifts in UMAP coordinates does not affect our biological interpretation.
+
+Query Dataset.
 ```{r}
-# Idents(querydata) <- "seurat_clusters"  ## RNA_snn_res.0.2
 DimPlot(querydata, pt.size = 3, group.by = "group", cols = brewer.pal(n = 12, name = "Paired")[c(7,6)]) +
+  ggtitle(NULL) +
   theme_minimal() +
   theme(
     legend.position = "none",
     axis.title = element_blank(),
     axis.text = element_blank()
   )
-ggsave(device = "eps", 
-       path = "../outs/Fig2a/", 
-       filename = "schematics_querydata.eps", 
-       width = 4, height = 3.6)
 ```
 
+Reference Dataset.
 ```{r}
 DimPlot(refdata, group.by = "treat", pt.size = 2, shuffle = TRUE) +
-  scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)])+
+  scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(5,3,1)])+
   theme_minimal() +
+  ggtitle(NULL) +
   theme(
     legend.position = "none",
     axis.title = element_blank(),
     axis.text = element_blank()
   )
-ggsave(device = "eps", 
-       path = "../outs/Fig2a/", 
-       filename = "schematics_refdata.eps", 
-       width = 5, height = 4)
 ```
 
-## Figure 2b
+### Figure 2b-d
 
-Descriptive analysis of the Query Dataset (Smart-seq2). Discrimination of "Transduced" and "Non-transduced" cells are based on whether *mScarlet* transcripts are expressed in the cells (cells is "Transduced" if mScarlet > 0).
+Descriptive analysis of the Query Dataset (Smart-seq2). Discrimination of "Transduced" and "Untransduced" cells are based on whether *mScarlet* transcripts are expressed in the cells (cells is "Transduced" if mScarlet > 0).
+
+### Figure 2b {#Figure2b}
 
 ```{r}
 DimPlot(querydata, group.by = "transduce_serotype", pt.size = 2, 
         cols = c(brewer.pal(n = 12, name = "Paired")[c(6,12,8)],"#CCCCCC")) +
   NoAxes() +
+  ggtitle(NULL) +
   theme(
     legend.position = "none",
     axis.title = element_blank(),
     axis.text = element_blank()
   )
-ggsave(device = "eps", 
-       path = "../outs/Fig2b/", 
-       filename = "umap_query.eps", 
-       width = 4, height = 3.6)
 ```
 
-## Figure 2c
+### Figure 2c {#Figure2c}
 
 ```{r}
 queryaav_sub <- subset(querydata, subset = group == "AAV")
@@ -104,43 +114,24 @@ queryaav_sub <- queryaav_sub %>%
   FindClusters(resolution = 0.3) %>%
   RunUMAP(dims = 1:20)
 ```
-```{r}
+```{r fig.width=5, fig.height=3.6}
 DimPlot(queryaav_sub, group.by = "transduce_serotype", pt.size = 3.6, 
         cols = c(brewer.pal(12, "Paired")[c(12,8)],"#CCCCCC")) +
   NoAxes() +
+  ggtitle(NULL) +
   theme(
     legend.position = "none",
     axis.title = element_blank(),
     axis.text = element_blank()
   )
-# as.data.frame(Embeddings(queryaav_sub[["umap"]])) %>% 
-#   mutate(transduce_serotype = queryaav_sub$transduce_serotype,
-#                 transduction = queryaav_sub$transduction) %>%
-#   ggplot(mapping = aes(x = UMAP_1, y = UMAP_2, fill = transduction, shape = transduce_serotype)) +
-#   geom_point(size = 2, stroke = 0) +
-#   scale_fill_manual(values = brewer.pal(n = 8, name = "Set1")[c(2,5)]) +
-#   scale_shape_manual(values = c("Non-transduced" = 21, "AAV-MG1.1" = 22, "AAV-MG1.2" = 23)) +
-#   theme(
-#     legend.position = "none",
-#     panel.background = element_blank(),
-#     panel.border = element_blank(),
-#     axis.title = element_blank(),
-#     axis.ticks = element_blank(),
-#     axis.text = element_blank(),
-#     legend.key = element_blank()
-#     )  ## Does not look very well
-ggsave(filename = "umap_query_aavsub.eps", 
-       path = "../outs/Fig2c/", 
-       device = "eps", 
-       width = 6, height = 5)
 ```
 
-## Figure 2d
+### Figure 2d {#Figure2d}
 
 ```{r}
 ## Order by factor
 querydata$transduce_serotype <- factor(querydata$transduce_serotype, 
-                                       levels = c("LPS","AAV-MG1.1","AAV-MG1.2","Non-transduced"))
+                                       levels = c("LPS","AAV-MG1.1","AAV-MG1.2","Untransduced"))
 umap_lps <- as.data.frame(Embeddings(querydata[["umap"]])) %>% 
   mutate(transduce_serotype = querydata$transduce_serotype) %>%
   ggplot(mapping = aes(x = UMAP_1, y = UMAP_2, color = transduce_serotype)) +
@@ -158,7 +149,7 @@ umap_lps <- as.data.frame(Embeddings(querydata[["umap"]])) %>%
     )
 
 queryaav_sub$transduce_serotype <- factor(queryaav_sub$transduce_serotype,
-                                          levels = c("AAV-MG1.1","AAV-MG1.2","Non-transduced"))
+                                          levels = c("AAV-MG1.1","AAV-MG1.2","Untransduced"))
 umap_mg1.1 <- as.data.frame(Embeddings(queryaav_sub[["umap"]])) %>% 
   mutate(transduce_serotype = queryaav_sub$transduce_serotype) %>%
   ggplot(mapping = aes(x = UMAP_1, y = UMAP_2, color = transduce_serotype)) +
@@ -208,7 +199,7 @@ umap_non_transduced <- as.data.frame(Embeddings(queryaav_sub[["umap"]])) %>%
     )
 
 querydata$transduce_serotype <- factor(querydata$transduce_serotype, 
-                                       levels = c("Non-transduced","AAV-MG1.2","AAV-MG1.1","LPS"))
+                                       levels = c("Untransduced","AAV-MG1.2","AAV-MG1.1","LPS"))
 violin_mScarlet <- VlnPlot(querydata, 
                            features = "mScarlet_norm", 
                            group.by = "transduce_serotype", 
@@ -224,39 +215,15 @@ violin_mScarlet <- VlnPlot(querydata,
     axis.text.y = element_blank(),
     axis.title.x = element_text(size = 18)
   )
-
+```
+```{r fig.width=5, fig.height=6}
 ((umap_lps / umap_mg1.1 / umap_mg1.2 / umap_non_transduced) | violin_mScarlet) + plot_layout(widths = c(0.9,1.6))
-
-ggsave(filename = "query_violin.eps", 
-       device = "eps", 
-       path = "../outs/Fig2d/", 
-       width = 6, height = 7.2, 
-       family = "Arial")
 ```
 
-## Figure 2e
+### Figure 2e {#Figure2e}
 
-UMAP colored by Louvain clusters.
-
-```{r}
-DimPlot(queryaav_sub, group.by = "seurat_clusters", pt.size = 2) + 
-  NoAxes() + 
-  NoLegend() + 
-  theme_minimal() +
-  ggtitle(NULL) +
-  theme(
-    panel.background = element_blank(),
-    axis.title = element_blank(),
-    axis.ticks = element_blank(),
-    axis.text = element_blank(),
-    legend.position = "none"
-  )
-ggsave(filename = "umap_queryaav_louvain.eps", 
-       device = "eps", 
-       path = "../outs/Fig2e/", 
-       width = 4, height = 3, 
-       family = "Arial")
-
+UMAP colored by Transduction.
+```{r fig.width=4, fig.height=3.4}
 DimPlot(queryaav_sub, group.by = "transduction", 
         cols = brewer.pal(n = 12, name = "Paired")[c(8,2)],
         pt.size = 2) + 
@@ -269,16 +236,29 @@ DimPlot(queryaav_sub, group.by = "transduction",
     axis.title = element_blank(),
     axis.ticks = element_blank(),
     axis.text = element_blank(),
-    legend.position = "none"
+    legend.position = "bottom"
   )
-ggsave(filename = "umap_queryaav_transduction.eps", 
-       device = "eps", 
-       path = "../outs/Fig2e/", 
-       width = 4, height = 3, 
-       family = "Arial")
 ```
 
-## Figure 2f
+UMAP colored by Louvain clusters.
+```{r fig.width=4, fig.height=3.4}
+Idents(queryaav_sub) <- "seurat_clusters"
+queryaav_sub <- RenameIdents(queryaav_sub, `0` = "C1", `1` = "C2")
+DimPlot(queryaav_sub, pt.size = 2) + 
+  NoAxes() + 
+  NoLegend() + 
+  theme_minimal() +
+  ggtitle(NULL) +
+  theme(
+    panel.background = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text = element_blank(),
+    legend.position = "bottom"
+  )
+```
+
+### Figure 2f {#Figure2f}
 
 ```{r}
 df <- queryaav_sub[[c("transduction","seurat_clusters")]]
@@ -286,12 +266,11 @@ df <- dplyr::rename(df, "Louvain clusters" = "seurat_clusters")
 
 basic_table <- table(df)
 
-# epitools::oddsratio(mg_table, method = "wald")
 epitools::oddsratio(basic_table, method = "wald")$measure[-1,]
 epitools::oddsratio(basic_table, method = "wald")$p.value
 
 ## cvms::plot_confusion_matrix() use integer levels
-df$transduction <- dplyr::recode(df$transduction, "Transduced" = 1, "Non-transduced" = 0)
+df$transduction <- dplyr::recode(df$transduction, "Transduced" = 1, "Untransduced" = 0)
 
 basic_table <- table(df)
 cfm <- as_tibble(basic_table)
@@ -305,19 +284,14 @@ g +
   xlab("Louvain clusters") +
   ylab("Transduction") +
   scale_x_discrete(labels = c("C1","C2"), position = "top") +
-  scale_y_discrete(labels = c("Non-transduced","Transduced")) +
+  scale_y_discrete(labels = c("Untransduced","Transduced")) +
   theme(
     text = element_text(size = 18)
   )
 
-ggsave(filename = "cfm.eps", 
-       device = "eps", 
-       path = "../outs/Fig2f/", 
-       width = 4, height = 3.6, 
-       family = "Arial")
 ```
 
-## Figure 2g
+### Figure 2g {#Figure2g}
 
 Joint visualization by 'De novo' Recomputed UMAP of Query and Reference Datasets:
 
@@ -336,33 +310,9 @@ as.data.frame(Embeddings(refquery[["umap"]])) %>%
     axis.text = element_blank(),
     legend.position = "none"
     )
-ggsave(filename = "de_novo_umap_refquery.eps", 
-       device = "eps", 
-       path = "../outs/Fig2g/", 
-       width = 5, height = 4, 
-       family = "Arial")
-as.data.frame(Embeddings(refquery[["umap"]])) %>%
-  mutate(id = refquery$id, ident = refquery$ident) %>%
-  ggplot(mapping = aes(x = UMAP_1, y = UMAP_2, color = ident, group = id)) +
-  geom_point(aes(shape = id), size = 1.5) +
-  scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(6,8,2,1,3,5)]) +
-  scale_shape_manual(values = c(23,20)) +
-  # theme_minimal() +
-  theme(
-    panel.background = element_blank(),
-    axis.title = element_blank(),
-    axis.ticks = element_blank(),
-    axis.text = element_blank(),
-    legend.position = "none"
-    )
-ggsave(filename = "de_novo_umap_refquery_crop.eps", 
-       device = "eps", 
-       path = "../outs/Fig2g/", 
-       width = 5, height = 4, 
-       family = "Arial")
 ```
 
-## Figure 2h
+### Figure 2h {#Figure2h}
 
 ```{r}
 query_transferred[[c("predicted.state","ident")]] %>%
@@ -375,15 +325,15 @@ query_transferred[[c("predicted.state","ident")]] %>%
   scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(6,2,8)]) +
   theme_classic() +
   theme(
-    legend.position = "none",
+    legend.position = "right",
     axis.title = element_text(size = 18),
     axis.text.y = element_text(size = 12),
     axis.text.x = element_text(size = 13),
   )
-ggsave(filename = "barplot_numcells_predicted.eps", 
-       device = "eps", 
-       path = '../outs/Fig2h',
-       width = 3, height = 4,
-       family = "Arial")
 ```
 
+## Session info
+
+```{r}
+sessionInfo()
+```
