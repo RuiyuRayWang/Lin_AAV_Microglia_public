@@ -312,7 +312,7 @@ as.data.frame(Embeddings(refquery[["umap"]])) %>%
   mutate(id = refquery$id, ident = refquery$ident) %>%
   ggplot(mapping = aes(x = UMAP_1, y = UMAP_2, color = ident, group = id)) +
   geom_point(aes(shape = id), size = 1.5) +
-  scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(5,6,1,3,8,2)]) +
+  scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(5,6,3,1,8,2)]) +
   scale_shape_manual(values = c(20,23)) +
   theme_minimal() +
   theme(

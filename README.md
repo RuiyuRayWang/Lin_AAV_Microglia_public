@@ -13,7 +13,9 @@ The study of microglia biology and the development of microglia-based gene thera
 
 ## List of contents
 
-The contents of this repository has been hosted on Github Page, which can be accessed [here](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).
+**The contents of this repository, which is hosted on Github Page, can be accessed [here](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).**
+
+For individual sections, follow the links below.
 
 Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
 
@@ -56,7 +58,6 @@ Microglia were rapidly dissociated by Dounce homogenization under cold condition
 |   ├── MM.GRCm38.102.annotation.tab
 |   └── RNAseq_sample_table.csv
 ├── docs
-├── notebooks
 ├── rscripts
 └── vignettes                             (rmarkdowns)
 ```
