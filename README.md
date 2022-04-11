@@ -2,18 +2,18 @@
 
 Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
 
+Publication:
+[Lin et al.]()
+
 ## Introduction
 
 Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
 
 The study of microglia biology and the development of microglia-based gene therapies are in urgent need of efficient and safe vehicles for microglia transgene delivery. To address this, we developed adeno-associated virus (AAV) variants that mediate efficient in vitro and in vivo microglia transduction via directed evolution of the AAV capsid protein. To assess the effect of AAV transduction on microglia, we carried out bulk RNAseq in primary microglia and found that microglia transduced by AAV remain close to homeostatic state. Furthermore, single-cell RNA sequencing showed that the AAV-MG variants mediate safe in vivo transgene delivery without inducing microglia immune activation. These AAV variants should facilitate the applications of various genetically-encoded sensors and effectors in studying microglia-related biology and therapeutic interventions.
 
-The analyses presented here are meant to support the findings in the original paper, published in Nature Methods:
-[Lin et al.]()
-
 ## List of contents
 
-[Index Page](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html)
+The contents of this repository has been hosted on Github Page, which can be accessed [here](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).
 
 Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
 
