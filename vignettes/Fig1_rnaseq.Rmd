@@ -8,7 +8,7 @@ knit: (function(input_file, encoding) {
     out_dir <- '../docs';
     rmarkdown::render(input_file,
       encoding=encoding,
-      output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+      output_file=file.path(dirname(input_file), out_dir, 'Fig1_rnaseq.html'))})
 ---
 
 ```{r include=FALSE}
@@ -22,13 +22,9 @@ You may click on the following links to fast forward to the codes directly produ
   - [Figure 1_1](#Figure1_1)
   - [Figure 1_2](#Figure1_2)
 
-## Introduction
+Back to [index page](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).
 
-Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
-
-The study of microglia biology and the development of microglia-based gene therapies are in urgent need of efficient and safe vehicles for microglia transgene delivery. To address this, we developed adeno-associated virus (AAV) variants that mediate efficient in vitro and in vivo microglia transduction via directed evolution of the AAV capsid protein. To assess the effect of AAV transduction on microglia, we carried out bulk RNAseq in primary microglia and found that microglia transduced by AAV remain close to homeostatic state. Furthermore, single-cell RNA sequencing showed that the AAV-MG variants mediate safe in vivo transgene delivery without inducing microglia immune activation. These AAV variants should facilitate the applications of various genetically-encoded sensors and effectors in studying microglia-related biology and therapeutic interventions.
-
-### About this Vignette
+## About this Vignette
 
 This vignette reproduces analyses related to bulk RNAseq in the original publication (Lin et al., 2022).  
 
