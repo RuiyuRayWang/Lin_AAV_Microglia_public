@@ -111,7 +111,7 @@ DimPlot(querydata, group.by = "transduce_serotype", pt.size = 2,
 
 ### Figure 2c {#Figure2c}
 
-```{r fig.width=4, fig.height=3}
+```{r}
 queryaav_sub <- subset(querydata, subset = group == "AAV")
 queryaav_sub <- queryaav_sub %>%
   NormalizeData() %>%
@@ -122,7 +122,7 @@ queryaav_sub <- queryaav_sub %>%
   FindClusters(resolution = 0.3) %>%
   RunUMAP(dims = 1:20)
 ```
-```{r fig.width=5, fig.height=3.6}
+```{r fig.width=4, fig.height=3}
 DimPlot(queryaav_sub, group.by = "transduce_serotype", pt.size = 3.6, 
         cols = c(brewer.pal(12, "Paired")[c(12,8)],"#CCCCCC")) +
   NoAxes() +
@@ -230,7 +230,8 @@ violin_mScarlet <- VlnPlot(querydata,
 
 ### Figure 2e {#Figure2e}
 
-UMAP colored by Transduction.
+We notice that in the UMAP embedding showing the subset of microglia subjected to AAV delivery, the transduced and untransduced microglia are positioned in a "well-mixed" fashion, suggesting that the transduced microglia may share a similar transcriptional state with untransduced microglia.
+
 ```{r fig.width=4, fig.height=3.4}
 DimPlot(queryaav_sub, group.by = "transduction", 
         cols = brewer.pal(n = 12, name = "Paired")[c(8,2)],
@@ -248,7 +249,8 @@ DimPlot(queryaav_sub, group.by = "transduction",
   )
 ```
 
-UMAP colored by Louvain clusters.
+To examine the relationship between transduction and transcriptional state in a more rigorous manner, we perform unsupervised clustering in the AAV delivery group using Louvain algorithm. Two cluster were obtained with distinct transcriptional states, as shown in the plots below.
+
 ```{r fig.width=4, fig.height=3.4}
 Idents(queryaav_sub) <- "seurat_clusters"
 queryaav_sub <- RenameIdents(queryaav_sub, `0` = "C1", `1` = "C2")
@@ -267,6 +269,10 @@ DimPlot(queryaav_sub, pt.size = 2) +
 ```
 
 ### Figure 2f {#Figure2f}
+
+Then, we collect the confusion matrix summarizing the microglia transduction state and Louvain cluster, and use `epitools` package to calculate the Odds Ratio (OR) from the confusion matrix. The Odds Ratio quantifies the association between two everts. In essence, an OR equal to 1 indicates that two events are independent. Here, we use `epitools` package to compute the OR, and test its value against 1 using "wald" method. The test result suggests that the OR does not deviate significantly from 1, suggesting that the trancriptional state and transduction state in microglia are independent.
+
+Finally, we use `plot_confusion_matrix()` from the `cvms` package to visualize the confusion matrix.
 
 ```{r}
 df <- queryaav_sub[[c("transduction","seurat_clusters")]]
@@ -307,8 +313,8 @@ as.data.frame(Embeddings(refquery[["umap"]])) %>%
   mutate(id = refquery$id, ident = refquery$ident) %>%
   ggplot(mapping = aes(x = UMAP_1, y = UMAP_2, color = ident, group = id)) +
   geom_point(aes(shape = id), size = 1.5) +
-  scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(6,8,2,1,3,5)]) +
-  scale_shape_manual(values = c(23,20)) +
+  scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(5,6,8,3,1,2)]) +
+  scale_shape_manual(values = c(20,23)) +
   theme_minimal() +
   theme(
     panel.background = element_blank(),

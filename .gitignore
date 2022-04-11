@@ -2,6 +2,8 @@
 data/*
 deprecated/*
 notebooks/*
+*.Rproj
+**/.DS_Store
 
 # LibreOffice temp files
 .~lock*
