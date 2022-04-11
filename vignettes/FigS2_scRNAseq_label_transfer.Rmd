@@ -28,7 +28,7 @@ Back to [index page](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ind
 
 ## About this Vignette
 
-This vignette illustrates the label transfer strategy with which the transcriptom states were evaluated for AAV transduced / non-transduced / LPS-primed microglia in the original publication (Lin et al., 2022). The strategy is largely inspired by `Seurat` [Multimodal reference mapping vignette](https://satijalab.org/seurat/articles/multimodal_reference_mapping.html) and [Mapping and annotating query datasets vignette](https://satijalab.org/seurat/articles/integration_mapping.html) from Satija group. 
+This vignette illustrates the label transfer strategy with which the transcriptom states were evaluated for AAV transduced / untransduced / LPS-primed microglia in the original publication (Lin et al., 2022). The strategy is largely inspired by `Seurat` [Multimodal reference mapping vignette](https://satijalab.org/seurat/articles/multimodal_reference_mapping.html) and [Mapping and annotating query datasets vignette](https://satijalab.org/seurat/articles/integration_mapping.html) from Satija group. 
 
 The input files of this vignette are processed `h5Seurat` objects, produced by the preprocessing vignettes (see index page). The output is a Seurat object merging both query and reference data in the `.h5Seurat` format.
 
@@ -159,7 +159,7 @@ non_transduced <- WhichCells(querydata, expression = mScarlet == 0)
 q_lps <- WhichCells(query.transferred.filtered, expression = treatment == "LPS")
 Idents(refquery) <- "treat"
 refquery <- SetIdent(refquery, cells = transduced, value = "Transduced")
-refquery <- SetIdent(refquery, cells = non_transduced, value = "Non-transduced")
+refquery <- SetIdent(refquery, cells = non_transduced, value = "Untransduced")
 refquery <- SetIdent(refquery, cells = q_lps, value = "LPS(Query)")
 refquery[["ident"]] <- Idents(refquery)
 
@@ -367,7 +367,7 @@ vplots[["Il1b"]] / vplots[["Spp1"]] / vplots[["Ifitm3"]] / vplots[["Ccl5"]]
 
 Preparing for heatmap plot.
 ```{r}
-query.transferred.filtered$ident <- factor(query.transferred.filtered$ident, levels = c("Non-transduced","Transduced","LPS(Query)"))
+query.transferred.filtered$ident <- factor(query.transferred.filtered$ident, levels = c("Untransduced","Transduced","LPS(Query)"))
 query.transferred.filtered <- ScaleData(query.transferred.filtered, features = c(mkset.1, mkset.2, mkset.3, VariableFeatures(query.transferred.filtered)))
 ```
 
