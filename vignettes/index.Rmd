@@ -24,7 +24,7 @@ The analyses presented here are used to support the findings in the original pap
 
 ## Resources
 
-The sequencing data used in this study can be accessed via GEO with accession number [GSE197743](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743).
+The sequencing data used in this study can be accessed via GEO under the accession number [GSE197743](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743).
 
 ## List of contents
 
