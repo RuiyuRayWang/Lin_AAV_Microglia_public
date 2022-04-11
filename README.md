@@ -2,7 +2,7 @@
 
 Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
 
-Publication:
+Publication:  
 [Lin et al.]()
 
 ## Introduction
