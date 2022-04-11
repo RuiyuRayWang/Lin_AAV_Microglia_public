@@ -99,7 +99,7 @@ Descriptive analysis of the Query Dataset (Smart-seq2). Discrimination of "Trans
 
 ```{r fig.width=4, fig.height=3}
 DimPlot(querydata, group.by = "transduce_serotype", pt.size = 2, 
-        cols = c(brewer.pal(n = 12, name = "Paired")[c(6,12,8)],"#CCCCCC")) +
+        cols = c(brewer.pal(n = 12, name = "Paired")[c(12,8,6)],"#CCCCCC")) +
   NoAxes() +
   ggtitle(NULL) +
   theme(

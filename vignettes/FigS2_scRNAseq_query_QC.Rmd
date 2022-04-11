@@ -352,7 +352,7 @@ umap_queryf1 <- FeaturePlot(cells, features = "Hexb") +
     legend.position = c(.80, .25)
   )
 
-umap_queryf2 <- DimPlot(cells, cells.highlight = colnames(cells.sce)[!cells.sce@colData$discard]) +
+umap_queryf2 <- DimPlot(cells, cells.highlight = colnames(querydata)) +
   NoLegend() +
   ggtitle("Retained Cells") +
   theme(

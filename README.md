@@ -32,7 +32,7 @@ Assessment of *in vivo* AAV transduction in microglia by scRNA-seq, run in order
   * Auxiliary Analysis
     + [Correlation Analysis of Signature Genes and Transgene (mScarlet) - Supplementary Figure 3](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS3_scRNAseq_corr.html)
 
-## Experiment setups
+## Experiment design
 
 Overall design:
 
