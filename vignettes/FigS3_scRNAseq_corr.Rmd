@@ -66,7 +66,7 @@ vplots <- list()
 for(feature in features_hom){
   vplots[[feature]] <- FetchData(queryaav_sub, vars = c("treatment", "transduction", feature, "mScarlet_norm")) %>%
     ggplot(aes_string(x = "treatment", y = feature)) + 
-    geom_jitter(aes_string(color = "mScarlet_norm"), size = 2, alpha = 1, width = 0.20) + 
+    geom_jitter(aes_string(color = "mScarlet_norm"), size = 1.5, alpha = 1, width = 0.20) + 
     geom_violin(aes_string(fill = "treatment"), alpha = 0.3, width = 0.6) +
     scale_color_distiller('normalized\nmScarlet\nexpression', palette = "Reds", direction = 1) +
     scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(11,7)]) +
@@ -78,15 +78,15 @@ for(feature in features_hom){
       axis.title.y = element_text(size = 15, family = "Arial"),
       axis.text.y = element_text(size = 12, family = "Arial"),
       legend.position = "none",
-      legend.title = element_text(size = 15, family = "Arial"),
-      legend.text = element_text(size = 12, family = "Arial")
+      legend.title = element_text(size = 10, family = "Arial"),
+      legend.text = element_text(size = 9, family = "Arial")
     )
 }
 
 for(feature in features_hom_lab){
   vplots[[feature]] <- FetchData(queryaav_sub, vars = c("treatment", "transduction", feature, "mScarlet_norm")) %>%
     ggplot(aes_string(x = "treatment", y = feature)) + 
-    geom_jitter(aes_string(color = "mScarlet_norm"), size = 2, alpha = 1, width = 0.20) + 
+    geom_jitter(aes_string(color = "mScarlet_norm"), size = 1.5, alpha = 1, width = 0.20) + 
     geom_violin(aes_string(fill = "treatment"), alpha = 0.3, width = 0.6) +
     scale_color_distiller('normalized\nmScarlet\nexpression', palette = "Reds", direction = 1) +
     scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(11,7)]) +
@@ -98,8 +98,8 @@ for(feature in features_hom_lab){
       axis.title.y = element_text(size = 15, family = "Arial"),
       axis.text.y = element_text(size = 12, family = "Arial"),
       legend.position = "none",
-      legend.title = element_text(size = 15, family = "Arial"),
-      legend.text = element_text(size = 12, family = "Arial"),
+      legend.title = element_text(size = 10, family = "Arial"),
+      legend.text = element_text(size = 9, family = "Arial"),
     )
 }
 ```
@@ -130,7 +130,7 @@ for(feature in c(features_hom, features_hom_lab)){
       color = "blue",
       cor.coef.name = "rho",
       method = "spearman",
-      size = 3
+      size = 2
     ) +
     theme(
       axis.title.x = element_text(size = 9),
@@ -155,7 +155,7 @@ vplots <- list()
 for(feature in features_rea){
   vplots[[feature]] <- FetchData(queryaav_sub, vars = c("treatment", "transduction", feature, "mScarlet_norm")) %>%
     ggplot(aes_string(x = "treatment", y = feature)) + 
-    geom_jitter(aes_string(color = "mScarlet_norm"), size = 2, alpha = 1, width = 0.20) + 
+    geom_jitter(aes_string(color = "mScarlet_norm"), size = 1.5, alpha = 1, width = 0.20) + 
     geom_violin(aes_string(fill = "treatment"), alpha = 0.3, width = 0.6) +
     scale_color_distiller('normalized\nmScarlet\nexpression', palette = "Reds", direction = 1) +
     scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(11,7)]) +
@@ -167,15 +167,15 @@ for(feature in features_rea){
       axis.title.y = element_text(size = 15, family = "Arial"),
       axis.text.y = element_text(size = 12, family = "Arial"),
       legend.position = "none",
-      legend.title = element_text(size = 15, family = "Arial"),
-      legend.text = element_text(size = 12, family = "Arial")
+      legend.title = element_text(size = 10, family = "Arial"),
+      legend.text = element_text(size = 9, family = "Arial")
     )
 }
 
 for(feature in features_rea_lab){
   vplots[[feature]] <- FetchData(queryaav_sub, vars = c("treatment", "transduction", feature, "mScarlet_norm")) %>%
     ggplot(aes_string(x = "treatment", y = feature)) + 
-    geom_jitter(aes_string(color = "mScarlet_norm"), size = 2, alpha = 1, width = 0.20) + 
+    geom_jitter(aes_string(color = "mScarlet_norm"), size = 1.5, alpha = 1, width = 0.20) + 
     geom_violin(aes_string(fill = "treatment"), alpha = 0.3, width = 0.6) +
     scale_color_distiller('normalized\nmScarlet\nexpression', palette = "Reds", direction = 1) +
     scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(11,7)]) +
@@ -187,8 +187,8 @@ for(feature in features_rea_lab){
       axis.title.y = element_text(size = 15, family = "Arial"),
       axis.text.y = element_text(size = 12, family = "Arial"),
       legend.position = "none",
-      legend.title = element_text(size = 15, family = "Arial"),
-      legend.text = element_text(size = 12, family = "Arial"),
+      legend.title = element_text(size = 10, family = "Arial"),
+      legend.text = element_text(size = 9, family = "Arial"),
     )
 }
 ```
@@ -218,7 +218,7 @@ for(feature in c(features_rea, features_rea_lab)){
       color = "blue",
       cor.coef.name = "rho",
       method = "spearman",
-      size = 3
+      size = 2
     ) +
     theme(
       axis.title.x = element_text(size = 9),

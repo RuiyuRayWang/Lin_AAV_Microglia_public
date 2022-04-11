@@ -176,7 +176,7 @@ query.transferred.filtered$ident <- as.character(query.transferred.filtered$iden
 ```{r}
 refquery$id <- factor(refquery$id, levels = c("Reference","Query"))
 ```
-```{r}
+```{r fig.width=3, fig.height=3.6}
 as.data.frame(refquery[[c("nCount_RNA","nFeature_RNA","id")]]) %>%
   ggplot(mapping = aes(x=id, y=nCount_RNA)) +
   geom_violin() +

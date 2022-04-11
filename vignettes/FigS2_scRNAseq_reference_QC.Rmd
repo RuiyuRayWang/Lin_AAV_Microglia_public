@@ -224,7 +224,7 @@ refdata_clean[["state"]] <- Idents(refdata_clean)
 ## Making plots
 
 A general note on the UMAP visualizations:  
-Depending on the use of CPUs and versions of the `umap` algorithm, the UMAP coordinates computed on different machines may not entirely match what was shown in the original publication. This is a known [issue](https://github.com/lmcinnes/umap/issues/525) of the UMAP algorithm. Nevertheless, the overall structure of the UMAP embedding should be consistent, i.e. microglia from mouse subjected to Saline, Poly(i:c) and LPS groups reside in different clusters. We've tested this on different computing platforms and reached the conclution that the shifts in UMAP coordinates does not affect our biological interpretation.
+Depending on the use of CPUs and versions of the `umap` algorithm, the UMAP coordinates computed on different machines may not entirely match what was shown in the original publication. This is a known [issue](https://github.com/lmcinnes/umap/issues/525) of the `umap` algorithm. Nevertheless, the overall structure of the UMAP embedding should be consistent, i.e. microglia from mouse subjected to Saline, Poly(i:c) and LPS groups reside in different clusters. We've tested this on different computing platforms and reached the conclution that the shifts in UMAP coordinates does not affect our biological interpretations.
 
 ### Supplementary Figure 2a {#FigS2a}
 
@@ -304,7 +304,7 @@ umap_reff1 <- FeaturePlot(refdata, features = "Hexb") +
                                                        ends = "last", type = "closed")),
     legend.title = element_blank(),
     legend.text = element_text(size = 14),
-    legend.position = c(.05, .22)
+    legend.position = c(.05, .25)
   )
 umap_reff2 <- DimPlot(refdata, cells.highlight = mg_manual) + 
   NoLegend() +

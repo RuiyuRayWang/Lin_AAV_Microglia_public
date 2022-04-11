@@ -266,7 +266,7 @@ querydata <- querydata %>%
 ## Making plots
 
 A general note on the UMAP visualizations:  
-Depending on the use of CPUs and versions of the `umap` algorithm, the UMAP coordinates computed on different machines may not entirely match what was shown in the original publication. This is a known [issue](https://github.com/lmcinnes/umap/issues/525) of the UMAP algorithm. Nevertheless, the overall structure of the UMAP embedding should be consistent, i.e. microglia from mouse subjected to Saline, Poly(i:c) and LPS groups reside in different clusters. We've tested this on different computing platforms and reached the conclution that the shifts in UMAP coordinates does not affect our biological interpretation.
+Depending on the use of CPUs and versions of the `umap` algorithm, the UMAP coordinates computed on different machines may not entirely match what was shown in the original publication. This is a known [issue](https://github.com/lmcinnes/umap/issues/525) of the `umap` algorithm. Nevertheless, the overall structure of the UMAP embedding should be consistent, i.e. microglia from mouse subjected to Saline, Poly(i:c) and LPS groups reside in different clusters. We've tested this on different computing platforms and reached the conclution that the shifts in UMAP coordinates does not affect our biological interpretations.
 
 ### Supplementary Figure 2e {#FigS2e}
 
@@ -349,7 +349,7 @@ umap_queryf1 <- FeaturePlot(cells, features = "Hexb") +
                                                        ends = "last", type = "closed")),
     legend.title = element_blank(),
     legend.text = element_text(size = 16),
-    legend.position = c(.05, .20)
+    legend.position = c(.80, .25)
   )
 
 umap_queryf2 <- DimPlot(cells, cells.highlight = colnames(cells.sce)[!cells.sce@colData$discard]) +
@@ -377,7 +377,7 @@ umap_queryf3 <- DimPlot(querydata, group.by = "treatment") +
     axis.line = element_line(arrow = grid::arrow(length = unit(0.3, "cm"),
                                                  ends = "last", type = "closed")),
     legend.title = element_blank(),
-    legend.text = element_text(size = 20),
+    legend.text = element_text(size = 16),
     legend.position = c(.55, .18),
     legend.spacing.y = unit(0.25, 'cm')
   )
