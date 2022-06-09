@@ -330,7 +330,7 @@ as.data.frame(Embeddings(refquery[["umap"]])) %>%
 query_transferred[[c("predicted.state","ident")]] %>%
   ggplot(mapping = aes(predicted.state)) +
   geom_bar(aes(fill = ident), width = 0.5) +
-  scale_x_discrete(labels = c("Homeostatic" = "Saline", "Reactive" = "LPS")) +
+  scale_x_discrete(labels = c("Homeostatic" = "Saline", "Reactive" = "LPS & Poly(i:c)")) +
   scale_y_continuous(expand = c(0,0), limits = c(0,390)) +
   ylab("Number of cells") +
   xlab("Predicted state") +
