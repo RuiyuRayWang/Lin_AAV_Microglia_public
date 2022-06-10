@@ -25,10 +25,6 @@ The sequencing data used in this study can be accessed via GEO under the accessi
 
 ## List of contents
 
-Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
-
-  - [RNAseq vignette - Figure 1](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig1_rnaseq.html)
-
 Assessment of *in vivo* AAV transduction in microglia by scRNA-seq:
 
   * Preprocessing
@@ -40,9 +36,10 @@ Assessment of *in vivo* AAV transduction in microglia by scRNA-seq:
   * Auxiliary Analysis
     + [Correlation Analysis of Signature Genes and Transgene (mScarlet) - Supplementary Figure 3](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS3_scRNAseq_corr.html)
 
+Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
+
+  - [RNAseq vignette - Figure 1](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig1_rnaseq.html)
+
 ## Acknowledgements
 
-TDB
-    
-    
-    
+TBD
