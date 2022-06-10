@@ -1,6 +1,9 @@
 # Lin et al. AAV Microglia public
 
-Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.
+Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.  
+View the hosted pages [**here**](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ## Introduction
 
@@ -8,24 +11,20 @@ The study of microglia biology and the development of microglia-based gene thera
 
 ## List of contents
 
-The contents of this repository, which is hosted on Github Page, can be accessed [**here**](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).
-
-For individual sections, follow the links below.
-
-Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
-
-  + [RNAseq vignette - Figure 1](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig1_rnaseq.html)
-
-Assessment of *in vivo* AAV transduction in microglia by scRNA-seq, run in order:
+Assessment of *in vivo* AAV transduction in microglia by scRNA-seq:
 
   * Preprocessing
-    + [Reference Dataset (10X) - Supplementary Figure 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_reference_QC.html)
     + [Query Dataset (Smart-seq2) - Supplementary Figure 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_query_QC.html)
+    + [Reference Dataset (10X) - Supplementary Figure 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_reference_QC.html)
   * Primary Analyses
     + [Label Transfer, and Comparative Analysis between Query and Reference - Supplementary Figure 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_label_transfer.html)
     + [Main Figures 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig2_main_figs.html)
   * Auxiliary Analysis
     + [Correlation Analysis of Signature Genes and Transgene (mScarlet) - Supplementary Figure 3](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS3_scRNAseq_corr.html)
+
+Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
+
+  + [RNAseq vignette - Figure S1](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig1_rnaseq.html)
 
 ## Experiment design
 
