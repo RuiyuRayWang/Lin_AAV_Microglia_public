@@ -179,7 +179,7 @@ query.transferred.filtered[["ident"]] <- Idents(query.transferred.filtered)
 query.transferred.filtered$ident <- as.character(query.transferred.filtered$ident)
 ```
 
-## Reproducing plots
+## Reproducing Plots
 
 ### Supplementary Figure 2i
 

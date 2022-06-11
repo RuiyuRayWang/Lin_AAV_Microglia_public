@@ -54,7 +54,7 @@ queryaav_sub <- subset(querydata, subset = group == "AAV")
 query_transduced <- subset(queryaav_sub, subset = transduction == "Transduced")
 ```
 
-## Making Plots
+## Reproducing Plots
 
 ### Supplementary Figure 3a {#FigS3a}
 
@@ -230,4 +230,10 @@ for(feature in c(features_rea, features_rea_lab)){
 ```
 ```{r fig.width=5, fig.height=8}
 (scplot[["Tnf"]] | scplot[["Il1b"]]) / (scplot[["Cd74"]] | scplot[["Cst7"]]) / (scplot[["Spp1"]] | scplot[["Irf9"]]) / (scplot[["Ccl2"]] | scplot[["Ccl5"]])
+```
+
+## Session info
+
+```{r}
+sessionInfo()
 ```

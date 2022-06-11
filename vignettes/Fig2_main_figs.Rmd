@@ -58,7 +58,7 @@ refdata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', verbos
 refquery <- LoadH5Seurat('../data/AAV_MG_scRNAseq/refquery.h5Seurat', verbose = F)
 ```
 
-## Making Plots
+## Reproducing Plots
 
 ### Figure 2a {#Figure2a}
 

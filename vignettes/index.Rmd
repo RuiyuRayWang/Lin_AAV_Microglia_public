@@ -19,10 +19,6 @@ Characterization of microglia polarization states under targeted AAV transductio
 
 The study of microglia biology and the development of microglia-based gene therapies are in urgent need of efficient and safe vehicles for microglia transgene delivery. To address this, we developed adeno-associated virus (AAV) variants that mediate efficient in vitro and in vivo microglia transduction via directed evolution of the AAV capsid protein. To assess the effect of AAV transduction on microglia, we carried out bulk RNAseq in primary microglia and found that microglia transduced by AAV remain close to homeostatic state. Furthermore, single-cell RNA sequencing showed that the AAV-MG variants mediate safe in vivo transgene delivery without inducing microglia immune activation. These AAV variants should facilitate the applications of various genetically-encoded sensors and effectors in studying microglia-related biology and therapeutic interventions.
 
-## Resources
-
-The sequencing data used in this study can be accessed via GEO under the accession number [GSE197743](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743).
-
 ## List of contents
 
 Assessment of *in vivo* AAV transduction in microglia by scRNA-seq:
@@ -40,6 +36,42 @@ Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
 
   - [RNAseq vignette - Figure 1](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig1_rnaseq.html)
 
+## Dependencies
+
+Some packages are required in order to build and run the vignettes. Please install them as follows:
+
+```{r eval=FALSE}
+install.packages("tidyverse")
+install.packages('Seurat')
+install.packages("ggpubr")
+install.packages("pheatmap")
+install.packages("RColorBrewer")
+install.packages("cvms")
+install.packages("epitools")
+install.packages("scales")
+```
+
+```{r eval=FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("scater")
+BiocManager::install("SummarizedExperiment")
+BiocManager::install("org.Mm.eg.db")
+BiocManager::install("DESeq2")
+```
+
+```{r eval=FALSE}
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+remotes::install_github("mojaveazure/seurat-disk")
+```
+
+## Resources
+
+The sequencing data used in this study can be accessed via GEO under the accession number [GSE197743](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743).
+
 ## Acknowledgements
 
-TBD
+This study is supported by Ministry of Science and Technology China Brain Initiative Grant (2021ZD0202803), the Research Unit of Medical Neurobiology, Chinese Academy of Medical Sciences (2019RU003), and the Beijing Municipal Goverment.
