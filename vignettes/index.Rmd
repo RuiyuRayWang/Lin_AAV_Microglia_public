@@ -36,9 +36,13 @@ Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
 
   - [RNAseq vignette - Figure 1](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig1_rnaseq.html)
 
+## Resources
+
+The sequencing data used in this study can be accessed via GEO under the accession number [GSE197743](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743).
+
 ## Dependencies
 
-Some packages are required in order to build and run the vignettes. Please install them as follows:
+Some packages are required in order to build and run the vignettes. You may install them as follows:
 
 ```{r eval=FALSE}
 install.packages("tidyverse")
@@ -67,10 +71,6 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
 }
 remotes::install_github("mojaveazure/seurat-disk")
 ```
-
-## Resources
-
-The sequencing data used in this study can be accessed via GEO under the accession number [GSE197743](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743).
 
 ## Acknowledgements
 
