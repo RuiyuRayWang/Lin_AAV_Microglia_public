@@ -29,7 +29,7 @@ Assessment of *in vivo* AAV transduction in microglia by scRNA-seq:
 
   * Preprocessing
     + [Query Dataset (Smart-seq2) - Extended Figure 7](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_query_QC.html)
-    + [Reference Dataset (10X) - Extended Figure 7](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_reference_QC.html.html)
+    + [Reference Dataset (10X) - Extended Figure 7](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_reference_QC.html)
   * Primary Analyses
     + [Label Transfer, and Comparative Analysis between Query and Reference - Extended Figure 7](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_label_transfer.html)
     + [Descriptive Analysis, Label Transfer, and Odds Ratio - Figure 3](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig3_main_figs.html)
