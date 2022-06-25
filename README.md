@@ -14,17 +14,17 @@ The study of microglia biology and the development of microglia-based gene thera
 Assessment of *in vivo* AAV transduction in microglia by scRNA-seq:
 
   * Preprocessing
-    + [Query Dataset (Smart-seq2) - Supplementary Figure 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_query_QC.html)
-    + [Reference Dataset (10X) - Supplementary Figure 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_reference_QC.html)
+    + [Query Dataset (Smart-seq2) - Extended Figure 7](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_query_QC.html)
+    + [Reference Dataset (10X) - Extended Figure 7](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_reference_QC.html.html)
   * Primary Analyses
-    + [Label Transfer, and Comparative Analysis between Query and Reference - Supplementary Figure 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_label_transfer.html)
-    + [Main Figures 2](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig2_main_figs.html)
+    + [Label Transfer, and Comparative Analysis between Query and Reference - Extended Figure 7](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_label_transfer.html)
+    + [Descriptive Analysis, Label Transfer, and Odds Ratio - Figure 3](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig3_main_figs.html)
   * Auxiliary Analysis
-    + [Correlation Analysis of Signature Genes and Transgene (mScarlet) - Supplementary Figure 3](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS3_scRNAseq_corr.html)
+    + [Correlation Analysis of Signature Genes and Transgene (mScarlet) - Extended Figure 8](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig8_scRNAseq_corr.html)
 
 Assessment of AAV transduction on *in vitro* cultured microglia via RNAseq:
 
-  + [RNAseq vignette - Figure S1](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig1_rnaseq.html)
+  - [RNAseq vignette - Extended Figure 1](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig1_rnaseq.html)
 
 ## Experiment design
 
@@ -36,6 +36,50 @@ Overall design:
       + mRNA profiles of cold-dissociated microglia from mice treated with LPS or stereotaxically injected with AAV, using Smart-seq2 (query dataset).
 
 Microglia were rapidly dissociated by Dounce homogenization under cold conditions and further enriched by Percoll density gradient centrifugation. e.g. the "classical" cold-mechanical dissociation protocol (Bennett et al., 2016). Steps involving FACS sorting were omitted to minimize *ex vivo* activation.
+
+## Data and code availability
+
+The sequencing data used in this study can be accessed via GEO under the accession number [GSE197743](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743).  
+You may also follow the above vignettes and use `GEOquery` to download the data programmatically.
+
+Codes reproducing the analysis and figures in the original publication are written with Rmarkdowns, rendered as html-pages and hosted on Github pages.  
+If you'd like to reproduce the vignettes on your own, simply clone the repository:
+```
+git clone https://github.com/RuiyuRayWang/Lin_AAV_Microglia_public.git
+```
+
+## Dependencies
+
+Some packages are required in order to build and run the vignettes. You may install them as follows:
+
+```{r eval=FALSE}
+install.packages("tidyverse")
+install.packages('Seurat')
+install.packages("ggpubr")
+install.packages("pheatmap")
+install.packages("RColorBrewer")
+install.packages("cvms")
+install.packages("epitools")
+install.packages("scales")
+```
+
+```{r eval=FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("GEOquery")
+BiocManager::install("scater")
+BiocManager::install("SummarizedExperiment")
+BiocManager::install("org.Mm.eg.db")
+BiocManager::install("DESeq2")
+```
+
+```{r eval=FALSE}
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+remotes::install_github("mojaveazure/seurat-disk")
+```
 
 ## Repository structure
 
