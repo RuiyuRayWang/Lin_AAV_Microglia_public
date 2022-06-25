@@ -368,6 +368,11 @@ pre code {
 </div>
 
 
+<div id="publication" class="section level2">
+<h2>Publication</h2>
+<p>Lin et al. Directed Evolution of Adeno-Associated Virus for Efficient
+Gene Delivery to Microglia. (Accepted) Nat. Methods.</p>
+</div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>Characterization of microglia polarization states under targeted AAV
@@ -393,37 +398,45 @@ scRNA-seq:</p>
 <ul>
 <li>Preprocessing
 <ul>
-<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_query_QC.html">Query
-Dataset (Smart-seq2) - Supplementary Figure 2</a></li>
-<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_reference_QC.html">Reference
-Dataset (10X) - Supplementary Figure 2</a></li>
+<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_query_QC.html">Query
+Dataset (Smart-seq2) - Extended Figure 7</a></li>
+<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_reference_QC.html.html">Reference
+Dataset (10X) - Extended Figure 7</a></li>
 </ul></li>
 <li>Primary Analyses
 <ul>
-<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS2_scRNAseq_label_transfer.html">Label
+<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig7_scRNAseq_label_transfer.html">Label
 Transfer, and Comparative Analysis between Query and Reference -
-Supplementary Figure 2</a></li>
-<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig2_main_figs.html">Descriptive
-Analysis, Label Transfer, and Odds Ratio - Figure 2</a></li>
+Extended Figure 7</a></li>
+<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig3_main_figs.html">Descriptive
+Analysis, Label Transfer, and Odds Ratio - Figure 3</a></li>
 </ul></li>
 <li>Auxiliary Analysis
 <ul>
-<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/FigS3_scRNAseq_corr.html">Correlation
-Analysis of Signature Genes and Transgene (mScarlet) - Supplementary
-Figure 3</a></li>
+<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig8_scRNAseq_corr.html">Correlation
+Analysis of Signature Genes and Transgene (mScarlet) - Extended Figure
+8</a></li>
 </ul></li>
 </ul>
 <p>Assessment of AAV transduction on <em>in vitro</em> cultured
 microglia via RNAseq:</p>
 <ul>
-<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/Fig1_rnaseq.html">RNAseq
-vignette - Figure 1</a></li>
+<li><a href="https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/ExtFig1_rnaseq.html">RNAseq
+vignette - Extended Figure 1</a></li>
 </ul>
 </div>
-<div id="resources" class="section level2">
-<h2>Resources</h2>
+<div id="data-and-code-availability" class="section level2">
+<h2>Data and code availability</h2>
 <p>The sequencing data used in this study can be accessed via GEO under
-the accession number <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743">GSE197743</a>.</p>
+the accession number <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197743">GSE197743</a>.<br />
+You may also follow the above vignettes and use <code>GEOquery</code> to
+download the data programmatically.</p>
+<p>Codes reproducing the analysis and figures in the original
+publication are written with Rmarkdowns, rendered as html-pages and
+hosted on Github pages.<br />
+If you’d like to reproduce the vignettes on your own, simply clone the
+repository:</p>
+<pre><code>git clone https://github.com/RuiyuRayWang/Lin_AAV_Microglia_public.git</code></pre>
 </div>
 <div id="dependencies" class="section level2">
 <h2>Dependencies</h2>
@@ -440,6 +453,7 @@ install.packages(&quot;scales&quot;)</code></pre>
 <pre class="r"><code>if (!require(&quot;BiocManager&quot;, quietly = TRUE))
     install.packages(&quot;BiocManager&quot;)
 
+BiocManager::install(&quot;GEOquery&quot;)
 BiocManager::install(&quot;scater&quot;)
 BiocManager::install(&quot;SummarizedExperiment&quot;)
 BiocManager::install(&quot;org.Mm.eg.db&quot;)

@@ -1,0 +1,530 @@
+---
+title: 'Lin et al.: AAV Microglia'
+subtitle: 'Descriptive analysis and Label Transfer for scRNA-seqdatasets  (Extended Data Figure 7)'
+author: "Ruiyu Ray Wang"
+date: "`r Sys.Date()`"
+output: html_document
+knit: (function(input_file, encoding) {
+    out_dir <- '../docs';
+    rmarkdown::render(input_file,
+      encoding=encoding,
+      output_file=file.path(dirname(input_file), out_dir, 'ExtFig7_scRNAseq_label_transfer.html'))})
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## TL;DR
+
+You may click on the following links to fast forward to the codes directly producing the Figures:
+
+  - [Extended Data Figure 7i](#EDFig7i)
+  - [Extended Data Figure 7j](#EDFig7j)
+  - [Extended Data Figure 7k](#EDFig7k)
+  - [Extended Data Figure 7l](#EDFig7l)
+
+Back to [index page](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).
+
+## About this Vignette
+
+This vignette illustrates the label transfer strategy in the original publication (Lin et al., 2022), with which the transcriptome states were evaluated for AAV transduced / untransduced / LPS-primed microglia. The strategy is largely inspired by `Seurat` [Multimodal reference mapping vignette](https://satijalab.org/seurat/articles/multimodal_reference_mapping.html) and [Mapping and annotating query datasets vignette](https://satijalab.org/seurat/articles/integration_mapping.html) from Satija group. 
+
+The input files of this vignette are processed `h5Seurat` objects, produced by the preprocessing vignettes (see index page). The output is a Seurat object merging both query and reference data in the `.h5Seurat` format.
+
+### Analysis Outline
+
+Upstream analysis pipelines (i.e. sequence alignment, generation of digital expression matrix, etc.):
+
+  * For Smart-seq2, fastq files were processed by a [custom Snakemake workflow](https://github.com/RuiyuRayWang/ScRNAseq_smkpipe_at_Luolab) to generate the expression table (feature-barcode-count matrix).
+  * For 10X, fastq files from 3 mice were quantified by CellRanger (v6.0.1) using `cellranger count` and then aggregated using `cellranger aggr`.
+
+Downstream analysis:
+
+  * Preprocessing and QC (`scater`)
+  * Seurat Standard Workflow (`Seurat`)
+  * Label Transfer (`Seurat`)
+
+## Pre-processing
+
+### Load libraries and data
+
+Load reuiqred libraries.
+```{r}
+suppressPackageStartupMessages({
+  library(Seurat)
+  library(SeuratDisk)
+  library(tidyverse)
+  library(RColorBrewer)
+})
+```
+
+Load the Seurat objects to workspace.
+```{r}
+# Preprocessed, QCed Smart-seq2 microglia (Query dataset)
+querydata <- LoadH5Seurat('../data/AAV_MG_scRNAseq/query_clean.h5Seurat', verbose = F)
+
+# Preprocessed, QCed 10X (Reference dataset)
+refdata <- LoadH5Seurat(file = '../data/AAV_MG_scRNAseq/refdata_clean.h5Seurat', verbose = F)
+```
+
+```{r fig.width=10, fig.height=4}
+DimPlot(querydata, group.by = "treatment") | DimPlot(refdata, group.by = "treat")
+```
+
+### Label transfer to identify cell states
+
+We use `Seurat` to jointly analyze the query dataset (Smart-seq2) and reference dataset (10X).  
+Specifically, the 10X reference was created with controlled experiments of three treatment groups: *Saline*, *10 mg/kg Poly(i:c)* and *0.83mg/kg LPS* (administered i.p.). This provides us with a high quality "mini-atlas" of microglia under healthy (*Saline*) and immune-active (*Poly(i:c)* and *LPS*) states.
+
+By leveraging the "microglia state" information in the reference dataset, we applied the `Seurat` anchor method to transfer the **"state" labels** from the reference to the query dataset. In doing so, we are able to make predictions about the state of the microglia in the query, as shown below.
+
+Find anchors between reference and query.
+```{r}
+dims_use <- 1:45
+
+anchors <- FindTransferAnchors(
+  reference = refdata,
+  query = querydata,
+  k.filter = 50,
+  normalization.method = "LogNormalize",
+  reference.reduction = "pca",
+  dims = dims_use
+)
+```
+
+Project query onto the reference UMAP structure.
+```{r}
+refdata <- RunUMAP(refdata, dims = dims_use, reduction.name = "umap", seed.use = 42, return.model = TRUE)
+
+query.transferred <- MapQuery(
+  anchorset = anchors,
+  query = querydata,
+  reference = refdata,
+  refdata = list(
+    state = "state",
+    treat = "treat"
+  ),
+  reference.reduction = "pca",
+  reduction.model = "umap"
+)
+```
+
+Queried cells with predictions score lower than 0.8 are probably incorrect (Stuart et al., 2019[^1], Fig.3D). In our analysis, we see only a small fraction of cells with low prediction scores. We speculate that these cells might represent low quality cells and thus they are filtered out. Once this is done, the reference and query objects are merged into a single object called `refquery`.
+```{r fig.width=5, fig.height=4}
+query.transferred <- SetIdent(query.transferred, cells = WhichCells(query.transferred, expression = predicted.treat.score < 0.8), value = "low")
+query.transferred <- SetIdent(query.transferred, cells = WhichCells(query.transferred, expression = predicted.treat.score >= 0.8), value = "high")
+query.transferred$score <- Idents(query.transferred)
+
+query.transferred[[c("predicted.treat.score","score")]] %>%
+  ggplot(aes(x = predicted.treat.score, fill = score)) + 
+  geom_histogram(bins = 20, color = "#333333") +
+  coord_flip() +
+  theme_light()
+```
+
+```{r}
+query.transferred.filtered <- subset(query.transferred, subset = predicted.treat.score > 0.8)
+query.transferred.filtered$score <- NULL
+
+## Merge objects
+refquery <- merge(refdata, query.transferred.filtered)
+```
+
+### Computing a 'de novo' UMAP visualization
+
+According to the [`Multimodal reference mapping vignette`](https://satijalab.org/seurat/articles/multimodal_reference_mapping.html), query cells directly mapping to the reference-derived UMAP will project to the most similar cells in the reference, which can potentially mask the presence of query cell types or cell states not captured in the reference. To account for these caveats, it is important to compute a 'de novo' UMAP visualization on the merged dataset during biological interpretation. Here we perform the computation and show that microglia from our query does not develop novel states which are absent in the reference.
+```{r}
+refquery[['pca']] <- merge(refdata[['pca']], query.transferred.filtered[['ref.pca']])
+refquery <- RunUMAP(refquery, reduction = "pca", dims = 1:45, n.epochs = 600)
+```
+```{r fig.width=10, fig.height=4}
+DimPlot(refquery, group.by = "id") | DimPlot(refquery, group.by = "treat")
+```
+
+## Brief Conclusion
+
+The label transfer and its related stratigies[^2] [^3] [^4] [^5] have been used extensively to predict cell types across different experiment batches and modalities.  
+Here, we showcase an alternative application where the **state** of the transcriptome of individual cells can be predicted with a good quality reference generated by tailored experiment designs. Combined with prior knowledge from cell biology, this strategy can be a powerful device in field such as immunology and neurobiology, where the profiling of cell states (i.e. diseased-vs-healthy) may provide insights of the biological system under study.
+
+### Update Metadata
+
+```{r}
+aav <- WhichCells(query.transferred, expression = treatment %in% c("AAV-MG1.2","AAV-MG1.1"))
+lps <- WhichCells(query.transferred, expression = treatment == "LPS")
+Idents(refquery) <- "treat"
+refquery <- SetIdent(refquery, cells = aav, value = "AAV transduction")
+refquery <- SetIdent(refquery, cells = lps, value = "LPS (Query)")
+refquery[["treat"]] <- Idents(refquery)
+
+Idents(refquery) <- "state"
+hom_pred <- WhichCells(query.transferred, expression = predicted.state == "Homeostatic")
+reac_pred <- WhichCells(query.transferred, expression = predicted.state == "Reactive")
+refquery <- SetIdent(refquery, cells = hom_pred, value = "Homeostatic (Predicted)")
+refquery <- SetIdent(refquery, cells = reac_pred, value = "Reactive (Predicted)")
+refquery[["state"]] <- Idents(refquery)
+
+transduced <- WhichCells(querydata, expression = mScarlet > 0)
+non_transduced <- WhichCells(querydata, expression = mScarlet == 0)
+q_lps <- WhichCells(query.transferred.filtered, expression = treatment == "LPS")
+Idents(refquery) <- "treat"
+refquery <- SetIdent(refquery, cells = transduced, value = "Transduced")
+refquery <- SetIdent(refquery, cells = non_transduced, value = "Untransduced")
+refquery <- SetIdent(refquery, cells = q_lps, value = "LPS(Query)")
+refquery[["ident"]] <- Idents(refquery)
+
+Idents(query.transferred.filtered) <- "transduction"
+query.transferred.filtered <- SetIdent(query.transferred.filtered, cells = q_lps, value = "LPS(Query)")
+query.transferred.filtered[["ident"]] <- Idents(query.transferred.filtered)
+query.transferred.filtered$ident <- as.character(query.transferred.filtered$ident)
+```
+
+## Reproducing Plots
+
+### Extended Data Figure 2i {#EDFig7i}
+
+```{r}
+refquery$id <- factor(refquery$id, levels = c("Reference","Query"))
+```
+```{r fig.width=3, fig.height=3.6}
+as.data.frame(refquery[[c("nCount_RNA","nFeature_RNA","id")]]) %>%
+  ggplot(mapping = aes(x=id, y=nCount_RNA)) +
+  geom_violin() +
+  geom_jitter(aes(color = id), size = 0.3, height = 0, width = 0.3) +
+  scale_x_discrete(labels = c("Reference\n(10x)","Query\n(Smart-seq2)")) +
+  scale_y_continuous(expand = c(0.1,0.1)) +
+  xlab(NULL) +
+  ylab("UMI counts") +
+  theme_linedraw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(size = 16),
+    axis.text.y = element_text(size = 14),
+    axis.title.y =  element_text(size = 18)
+    )
+```
+
+### Extended Data Figure 2j {#EDFig7j}
+
+```{r fig.width=3, fig.height=3.6}
+as.data.frame(refquery[[c("nFeature_RNA","id")]]) %>%
+  ggplot(mapping = aes(x=id, y=nFeature_RNA)) +
+  geom_violin() +
+  geom_jitter(aes(color = id), size = 0.3, height = 0, width = 0.3) +
+  scale_x_discrete(labels = c("Reference\n(10x)","Query\n(Smart-seq2)")) +
+  scale_y_continuous(expand = c(0.1,0.1)) +
+  xlab(NULL) +
+  ylab("Genes Detected") +
+  theme_linedraw() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(size = 16),
+    axis.text.y = element_text(size = 14),
+    axis.title.y =  element_text(size = 18)
+    )
+```
+
+## DEG analysis and marker expressions
+
+### Extended Data Figure 2k {#EDFig7k}
+
+Identify differentially expression genes (DEGs).
+```{r}
+Idents(refdata) <- "treat"
+mks.refdata.all <- FindAllMarkers(refdata, only.pos = T)
+
+Idents(query.transferred.filtered) <- "group"
+mks.querydata.all <- FindAllMarkers(query.transferred.filtered, only.pos = T)
+```
+
+Parse DEGs.
+```{r}
+mkset.1 <- intersect(mks.refdata.all[mks.refdata.all$cluster == "Saline",]$gene, 
+                     mks.querydata.all[mks.querydata.all$cluster == "AAV",]$gene)
+
+mkset.2 <- mks.refdata.all[mks.refdata.all$cluster == "Poly(i:c)",]$gene
+
+mkset.3 <- intersect(mks.refdata.all[mks.refdata.all$cluster %in% c("LPS","Poly(i:c)"),]$gene, 
+                     mks.querydata.all[mks.querydata.all$cluster == "LPS",]$gene)
+```
+
+#### DEGs Heatmap
+
+Preparing for heatmap plot.
+```{r}
+refdata$treat <- factor(refdata$treat, levels = c("Saline","Poly(i:c)","LPS"))
+refdata <- ScaleData(refdata, features = c(mkset.1, mkset.2, mkset.3, VariableFeatures(refdata)))
+```
+
+Heatmap of DEGs in Saline, Poly(i:c), LPS groups in reference dataset.
+```{r}
+## Downsample for demo
+DoHeatmap(subset(refdata, downsample = 500),
+          features = c(mkset.1, mkset.2, mkset.3),
+          group.by = "treat",
+          group.colors = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+  scale_fill_distiller(palette = "RdBu") +
+  theme(
+    axis.text.y = element_blank()
+    )
+```
+```{r}
+## Extremely slow, could crash Rstudio. Only run on high performance work-stations or clusters.
+# DoHeatmap(refdata,
+#           features = c(mkset.1, mkset.2, mkset.3),
+#           group.by = "treat",
+#           group.colors = brewer.pal(n = 12, name = "Paired")[c(1,3,5)],
+#           label = FALSE) +
+#   scale_fill_distiller(palette = "RdBu") +
+#   theme(
+#     axis.text.y = element_blank()
+#     ) +
+#   NoLegend()
+```
+
+#### Violin plots for Representative Genes
+
+```{r}
+Idents(refdata) <- "treat"
+features_hom = c("P2ry12","Cx3cr1","Sall1")
+features_hom_lab = c( "Csf1r")
+
+vplots = list()
+for (feature in features_hom){
+  vplots[[feature]] <- FetchData(refdata, vars = c("treat", feature)) %>% 
+    ggplot(aes_string(x = "treat", y = feature)) + 
+    geom_violin(aes_string(fill = "treat")) + 
+    geom_jitter(aes_string(color = "treat"), size = 0.3, alpha = 0.2, width = 0.25) + 
+    scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+    scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.title.y = element_text(size = 16, family = "Arial"),
+      axis.text.y = element_text(size = 12, family = "Arial")
+    )
+}
+
+for (feature in features_hom_lab){
+  vplots[[feature]] <- FetchData(refdata, vars = c("treat", feature)) %>% 
+    ggplot(aes_string(x = "treat", y = feature)) + 
+    geom_violin(aes_string(fill = "treat")) + 
+    geom_jitter(aes_string(color = "treat"), size = 0.3, alpha = 0.2, width = 0.25) + 
+    scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+    scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text.x = element_text(size = 15, family = "Arial"),
+      axis.title.y = element_text(size = 16, family = "Arial"),
+      axis.text.y = element_text(size = 12, family = "Arial")
+    )
+}
+```
+```{r fig.width=3, fig.height=6}
+vplots[["P2ry12"]] / vplots[["Cx3cr1"]] / vplots[["Sall1"]] / vplots[["Csf1r"]]
+```
+
+```{r}
+features_rea = c("Il1b","Spp1","Ifitm3")
+features_rea_lab = c("Ccl5")
+
+vplots = list()
+for (feature in features_rea){
+  vplots[[feature]] <- FetchData(refdata, vars = c("treat", feature)) %>% 
+    ggplot(aes_string(x = "treat", y = feature)) + 
+    geom_violin(aes_string(fill = "treat")) + 
+    geom_jitter(aes_string(color = "treat"), size = 0.3, alpha = 0.2, width = 0.25) + 
+    scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+    scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.title.y = element_text(size = 16, family = "Arial"),
+      axis.text.y = element_text(size = 12, family = "Arial")
+    )
+}
+
+for (feature in features_rea_lab){
+  vplots[[feature]] <- FetchData(refdata, vars = c("treat", feature)) %>% 
+    ggplot(aes_string(x = "treat", y = feature)) + 
+    geom_violin(aes_string(fill = "treat")) + 
+    geom_jitter(aes_string(color = "treat"), size = 0.3, alpha = 0.2, width = 0.25) + 
+    scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+    scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,3,5)]) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text.x = element_text(size = 15, family = "Arial"),
+      axis.title.y = element_text(size = 16, family = "Arial"),
+      axis.text.y = element_text(size = 12, family = "Arial")
+    )
+}
+```
+```{r fig.width=3, fig.height=6}
+vplots[["Il1b"]] / vplots[["Spp1"]] / vplots[["Ifitm3"]] / vplots[["Ccl5"]]
+```
+
+### Extended Data Figure 2l {#EDFig7l}
+
+#### DEGs Heatmap
+
+Preparing for heatmap plot.
+```{r}
+query.transferred.filtered$ident <- factor(query.transferred.filtered$ident, levels = c("Untransduced","Transduced","LPS(Query)"))
+query.transferred.filtered <- ScaleData(query.transferred.filtered, features = c(mkset.1, mkset.2, mkset.3, VariableFeatures(query.transferred.filtered)))
+```
+
+Heatmap of DEGs in AAV, LPS groups in query dataset.
+```{r}
+## Demo
+DoHeatmap(query.transferred.filtered,
+          features = c(mkset.1,mkset.3),
+          group.by = "ident",
+          group.colors = brewer.pal(n = 12, name = "Paired")[c(1,8,6)]) +
+  theme(
+    axis.text.y = element_blank()
+    ) +
+  scale_fill_distiller(palette = "PiYG")
+```
+```{r}
+# DoHeatmap(query.transferred.filtered,
+#           features = c(mkset.1,mkset.3),
+#           group.by = "ident",
+#           group.colors = brewer.pal(n = 12, name = "Paired")[c(1,8,6)],
+#           label = FALSE) +
+#   theme(
+#     axis.text.y = element_blank()
+#     ) +
+#   scale_fill_distiller(palette = "PiYG") +
+#   NoLegend()
+```
+
+#### Violin plots for Representative Genes
+
+```{r}
+Idents(query.transferred.filtered) <- "ident"
+```
+
+```{r}
+features_hom = c("P2ry12","Cx3cr1","Sall1")
+features_hom_lab = c( "Csf1r")
+
+vplots = list()
+for (feature in features_hom){
+  vplots[[feature]] <- FetchData(query.transferred.filtered, vars = c("treatment", feature)) %>% 
+    ggplot(aes_string(x = "treatment", y = feature)) + 
+    geom_jitter(aes_string(color = "treatment"), size = 0.6, alpha = 1, width = 0.25) + 
+    geom_violin(aes_string(fill = "treatment"), alpha = 0.6) + 
+    scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,7,5)]) +
+    scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,7,5)]) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.title.y = element_text(size = 16, family = "Arial"),
+      axis.text.y = element_text(size = 12, family = "Arial")
+    )
+}
+
+for (feature in features_hom_lab){
+  vplots[[feature]] <- FetchData(query.transferred.filtered, vars = c("treatment", feature)) %>% 
+    ggplot(aes_string(x = "treatment", y = feature)) + 
+    geom_jitter(aes_string(color = "treatment"), size = 0.6, alpha = 1, width = 0.25) + 
+    geom_violin(aes_string(fill = "treatment"), alpha = 0.6) + 
+    scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,7,5)]) +
+    scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,7,5)]) +
+    scale_x_discrete(labels = c("Untransd.","Transd.","LPS")) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text.x = element_text(size = 15, family = "Arial"),
+      axis.title.y = element_text(size = 16, family = "Arial"),
+      axis.text.y = element_text(size = 12, family = "Arial")
+    )
+}
+```
+```{r fig.width=3, fig.height=6}
+vplots[["P2ry12"]] / vplots[["Cx3cr1"]] / vplots[["Sall1"]] / vplots[["Csf1r"]]
+```
+
+```{r}
+features_rea = c("Il1b","Spp1","Ifitm3")
+features_rea_lab = c("Ccl5")
+
+vplots = list()
+for (feature in features_rea){
+  vplots[[feature]] <- FetchData(query.transferred.filtered, vars = c("treatment", feature)) %>% 
+    ggplot(aes_string(x = "treatment", y = feature)) + 
+    geom_jitter(aes_string(color = "treatment"), size = 0.6, alpha = 1, width = 0.25) + 
+    geom_violin(aes_string(fill = "treatment"), alpha = 0.6) + 
+    scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,7,5)]) +
+    scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,7,5)]) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.title.y = element_text(size = 16, family = "Arial"),
+      axis.text.y = element_text(size = 12)
+    )
+}
+
+for (feature in features_rea_lab){
+  vplots[[feature]] <- FetchData(query.transferred.filtered, vars = c("treatment", feature)) %>% 
+    ggplot(aes_string(x = "treatment", y = feature)) + 
+    geom_jitter(aes_string(color = "treatment"), size = 0.6, alpha = 1, width = 0.25) + 
+    geom_violin(aes_string(fill = "treatment"), alpha = 0.6) + 
+    scale_color_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,7,5)]) +
+    scale_fill_manual(values = brewer.pal(n = 12, name = "Paired")[c(1,7,5)]) +
+    scale_x_discrete(labels = c("Untransd.","Transd.","LPS")) +
+    theme_classic() +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      axis.text.x = element_text(size = 15, family = "Arial"),
+      axis.title.y = element_text(size = 16, family = "Arial"),
+      axis.text.y = element_text(size = 12, family = "Arial")
+    )
+}
+```
+```{r fig.width=3, fig.height=6}
+vplots[["Il1b"]] / vplots[["Spp1"]] / vplots[["Ifitm3"]] / vplots[["Ccl5"]]
+```
+
+## Save Results
+
+Backup the processed Seurat object using `h5` format.
+```{r}
+## Avoid using factor while saving to other formats
+refquery$treat <- as.character(refquery$treat)
+refquery$state <- as.character(refquery$state)
+refquery$ident <- as.character(refquery$ident)
+
+if(!dir.exists('../data/AAV_MG_scRNAseq')){dir.create('../data/AAV_MG_scRNAseq')}
+SaveH5Seurat(refquery, filename = '../data/AAV_MG_scRNAseq/refquery.h5Seurat', overwrite = T, verbose = F)
+SaveH5Seurat(query.transferred.filtered, filename = '../data/AAV_MG_scRNAseq/query_transferred.h5Seurat', overwrite = T, verbose = F)
+Convert('../data/AAV_MG_scRNAseq/query_transferred.h5Seurat', dest = "h5ad", overwrite = T, verbose = F)
+```
+
+### Session info
+
+```{r}
+sessionInfo()
+```
+
+[^1]: Stuart, T. et al. Comprehensive Integration of Single-Cell Data. Cell 177, 1888-1902.e21 (2019).
+[^2]: Kiselev, V. Y., Yiu, A. & Hemberg, M. scmap: projection of single-cell RNA-seq data across data sets. Nat Methods 15, 359–362 (2018).
+[^3]: Srivastava, D., Iyer, A., Kumar, V. & Sengupta, D. CellAtlasSearch: a scalable search engine for single cells. Nucleic Acids Research 46, W141–W147 (2018).
+[^4]: Sato, K., Tsuyuzaki, K., Shimizu, K. & Nikaido, I. CellFishing.jl: an ultrafast and scalable cell search method for single-cell RNA sequencing. Genome Biology 20, 31 (2019).
+[^5]: Cao, Z.-J., Wei, L., Lu, S., Yang, D.-C. & Gao, G. Searching large-scale scRNA-seq databases via unbiased cell embedding with Cell BLAST. Nat Commun 11, 3458 (2020).
+
+
