@@ -1,10 +1,11 @@
 # Lin et al. AAV Microglia public
 
 Characterization of microglia polarization states under targeted AAV transduction using bulk and single cell RNA sequencing.  
-[**View our hosted vignettes on Github Pages**](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).
+[**View the hosted documents on Github Pages**](https://ruiyuraywang.github.io/Lin_AAV_Microglia_public/index.html).
 
-For details on the evolution and screening of the AAV capsid, view our [original publication](https://www.nature.com/articles/s41592-022-01547-7):  
-Lin, R. et al. Directed evolution of adeno-associated virus for efficient gene delivery to microglia. Nat Methods 1–10 (2022) doi:10.1038/s41592-022-01547-7.
+For full details on the evolution and screening of the AAV capsid, check out the published version of our paper:
+
+[Lin, R. et al. Directed evolution of adeno-associated virus for efficient gene delivery to microglia. Nat Methods 1–10 (2022) doi:10.1038/s41592-022-01547-7.](https://www.nature.com/articles/s41592-022-01547-7)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
